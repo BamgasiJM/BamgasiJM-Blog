@@ -199,8 +199,10 @@ function setMode(nextMode, stash = true) {
   mode = nextMode;
   $('#reading-layout').hidden = mode !== 'read';
   $('#editor-layout').hidden = mode !== 'edit';
-  $('#mode-toggle').textContent = mode === 'edit' ? 'Read' : 'Edit';
-  $('#mode-toggle').setAttribute('aria-label', mode === 'edit' ? 'Switch to read mode' : 'Switch to edit mode');
+  const modeLabel = mode === 'edit' ? 'Switch to read mode' : 'Switch to edit mode';
+  $('#mode-toggle').setAttribute('aria-label', modeLabel);
+  $('#mode-toggle').title = modeLabel;
+  $('#mode-toggle').setAttribute('aria-pressed', String(mode === 'edit'));
   $('#new-note').hidden = mode !== 'edit';
   updateOutline();
   applyPanelWidths();
@@ -297,8 +299,22 @@ $('#new-note').addEventListener('click', () => {
 });
 $('#theme-toggle').addEventListener('click', () => { document.body.classList.toggle('dark'); updateThemeLabel(); persist(); });
 $('#code-toggle').addEventListener('click', () => { document.body.classList.toggle('code-monochrome'); updateCodeLabel(); persist(); });
-function updateCodeLabel() { const enabled = !document.body.classList.contains('code-monochrome'); $('#code-toggle').setAttribute('aria-pressed', String(enabled)); $('#code-label').textContent = enabled ? 'Code colors on' : 'Code colors off'; }
-function updateThemeLabel() { $('#theme-label').textContent = document.body.classList.contains('dark') ? 'Light mode' : 'Dark mode'; }
+function updateCodeLabel() {
+  const enabled = !document.body.classList.contains('code-monochrome');
+  const label = enabled ? 'Code colors on' : 'Code colors off';
+  $('#code-toggle').setAttribute('aria-pressed', String(enabled));
+  $('#code-toggle').setAttribute('aria-label', label);
+  $('#code-toggle').title = label;
+  $('#code-label').textContent = label;
+}
+function updateThemeLabel() {
+  const dark = document.body.classList.contains('dark');
+  const label = dark ? 'Light mode' : 'Dark mode';
+  $('#theme-toggle').setAttribute('aria-pressed', String(dark));
+  $('#theme-toggle').setAttribute('aria-label', label);
+  $('#theme-toggle').title = label;
+  $('#theme-label').textContent = label;
+}
 $('#sidebar-toggle').addEventListener('click', () => {
   $('#sidebar').inert = false;
   $('#sidebar').classList.add('open'); $('#scrim').hidden = false;
@@ -348,6 +364,7 @@ function updateOutline() {
   const toggle = $('#outline-toggle');
   toggle.hidden = mode === 'edit';
   toggle.setAttribute('aria-expanded', String(!outlineHidden));
+  toggle.setAttribute('aria-pressed', String(!outlineHidden));
   const label = outlineHidden ? 'Show table of contents' : 'Hide table of contents';
   toggle.setAttribute('aria-label', label);
   toggle.title = label;
