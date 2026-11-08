@@ -91,8 +91,8 @@ function allFoldersExpanded() {
   const expanded = folder => folder.children.every(child => !collapsed.has(child.id) && expanded(child));
   return Boolean(query) || expanded(tree);
 }
-function renderClasses() {
-  const open = new Set(Array.from($('#class-tree').querySelectorAll('details[open]'), node => node.dataset.course));
+function renderClasses(reset = false) {
+  const open = new Set(reset ? [] : Array.from($('#class-tree').querySelectorAll('details[open]'), node => node.dataset.course));
   $('#class-tree').innerHTML = courses.map(({ id: key, title }) => '<details class="course-folder" data-course="' + key + '"' + (open.has(key) ? ' open' : '') + '><summary title="' + escapeHtml(title) + '">' + escapeHtml(title) + '</summary><div class="folder-children">' + posts.filter(post => post.courseId === key).map(postButton).join('') + '</div></details>').join('');
 }
 function renderTree() {
@@ -245,6 +245,7 @@ async function selectPost(id) {
     setMode(mode, false);
     $('#save-status').textContent = '';
     $('#article-scroll').scrollTop = 0;
+    if (mode === 'read' && next.kind !== 'pdf' && window.matchMedia('(max-width: 760px)').matches) window.scrollTo(0, 0);
     closeSidebar();
   } catch (error) { if (version === selectionVersion) toast(error.message); }
   finally { if (version === selectionVersion) $('#article').setAttribute('aria-busy', 'false'); }
@@ -480,6 +481,7 @@ window.addEventListener('resize', () => {
   if (mode === 'edit') requestAnimationFrame(renderPreview);
 });
 window.addEventListener('beforeunload', (event) => { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
+renderClasses(true);
 renderTree(); renderArticle(); updateThemeLabel(); updateCodeLabel(); updateOutline(); updateSections();
 applyPanelWidths();
 initializeContent();
