@@ -6,6 +6,24 @@ import { courses } from './courses.js';
 import { coursePosts } from './course-library.js';
 
 const $ = (selector) => document.querySelector(selector);
+document.addEventListener('click', async event => {
+  const button = event.target.closest('.code-copy');
+  if (!button) return;
+  const code = button.closest('pre')?.querySelector('code');
+  if (!code) return;
+  try {
+    await navigator.clipboard.writeText(code.textContent);
+    button.classList.add('copied');
+    button.setAttribute('aria-label', 'Copied');
+    button.title = 'Copied';
+    clearTimeout(button.copyTimer);
+    button.copyTimer = setTimeout(() => {
+      button.classList.remove('copied');
+      button.setAttribute('aria-label', 'Copy code');
+      button.title = 'Copy code';
+    }, 1600);
+  } catch { toast('코드를 복사하지 못했습니다. 브라우저의 클립보드 권한을 확인해주세요.'); }
+});
 const storageKey = 'gyeol-design-preview-v1';
 const staticContent = document.body.dataset.content === 'static';
 if (staticContent) {
@@ -32,6 +50,8 @@ const layoutStorageKey = 'bamgasijm-panel-widths-v1';
 let panelWidths = { sidebar: 288, outline: 216 };
 let mode = 'read';
 let outlineHidden = false;
+let compactOutlineOpen = false;
+let sidebarHidden = false;
 const sectionCollapsed = { blog: false, class: false };
 let dirty = false;
 let storageAvailable = true;
@@ -56,6 +76,7 @@ try {
 try {
   const savedLayout = JSON.parse(localStorage.getItem(layoutStorageKey) || 'null');
   outlineHidden = savedLayout?.outlineHidden === true;
+  sidebarHidden = savedLayout?.sidebarHidden === true;
   for (const key of ['blog', 'class']) sectionCollapsed[key] = savedLayout?.sections?.[key] === true;
   for (const key of ['sidebar', 'outline']) {
     if (Number.isFinite(savedLayout?.[key])) panelWidths[key] = savedLayout[key];
@@ -247,6 +268,7 @@ async function selectPost(id) {
     }
     if (version !== selectionVersion) return;
     selected = id;
+    compactOutlineOpen = false;
     const parts = (next.path || id).split('/');
     for (let index = 1; index < parts.length; index++) collapsed.delete(parts.slice(0, index).join('/'));
     renderTree(); renderArticle();
@@ -268,7 +290,7 @@ function closeSidebar() {
   $('#sidebar').classList.remove('open'); $('#scrim').hidden = true;
   $('.main').inert = false;
   $('#sidebar').inert = window.matchMedia('(max-width: 760px)').matches;
-  $('#sidebar-toggle').setAttribute('aria-expanded', 'false');
+  updateSidebarToggle();
   if (wasOpen && window.matchMedia('(max-width: 760px)').matches) $('#sidebar-toggle').focus();
 }
 function insertText(text) {
@@ -337,14 +359,25 @@ function updateThemeLabel() {
   $('#theme-label').textContent = label;
 }
 $('#sidebar-toggle').addEventListener('click', () => {
+  if (!window.matchMedia('(max-width: 760px)').matches) {
+    sidebarHidden = !sidebarHidden;
+    updateSidebarToggle();
+    applyPanelWidths();
+    savePanelWidths();
+    return;
+  }
+  compactOutlineOpen = false;
+  updateOutline();
   $('#sidebar').inert = false;
   $('#sidebar').classList.add('open'); $('#scrim').hidden = false;
   $('#sidebar-toggle').setAttribute('aria-expanded', 'true');
+  updateSidebarToggle();
   $('.main').inert = true;
   $('#close-sidebar').focus();
 });
 $('#close-sidebar').addEventListener('click', closeSidebar); $('#scrim').addEventListener('click', closeSidebar);
 document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && compactOutlineOpen) closeCompactOutline();
   if (!$('#sidebar').classList.contains('open')) return;
   if (event.key === 'Escape') closeSidebar();
   if (event.key === 'Tab') {
@@ -375,27 +408,51 @@ resizer.addEventListener('keydown', (event) => { if (['ArrowLeft', 'ArrowRight']
 
 function panelBounds(key) {
   const width = $('.workspace').clientWidth;
-  const otherWidth = key === 'sidebar' ? (width > 1000 && mode === 'read' && current().kind !== 'pdf' && !outlineHidden ? panelWidths.outline + 6 : 0) : panelWidths.sidebar + 6;
+  const otherWidth = key === 'sidebar' ? (width > 1000 && mode === 'read' && current().kind !== 'pdf' && !outlineHidden ? panelWidths.outline + 6 : 0) : sidebarHidden ? 0 : panelWidths.sidebar + 6;
   const min = key === 'sidebar' ? 220 : 160;
   const max = Math.max(min, Math.min(key === 'sidebar' ? 560 : 420, width - otherWidth - 366));
   return { min, max };
 }
 function updateOutline() {
+  const compact = window.matchMedia('(max-width: 1000px)').matches;
+  const visible = compact ? compactOutlineOpen : !outlineHidden;
+  $('#reading-layout').classList.toggle('compact-outline-open', compact && compactOutlineOpen);
   $('#reading-layout').classList.toggle('outline-hidden', outlineHidden);
   const toggle = $('#outline-toggle');
   toggle.hidden = mode === 'edit' || current().kind === 'pdf';
-  toggle.setAttribute('aria-expanded', String(!outlineHidden));
-  toggle.setAttribute('aria-pressed', String(!outlineHidden));
-  const label = outlineHidden ? 'Show table of contents' : 'Hide table of contents';
+  toggle.setAttribute('aria-expanded', String(visible));
+  toggle.setAttribute('aria-pressed', String(visible));
+  const label = visible ? 'Hide table of contents' : 'Show table of contents';
   toggle.setAttribute('aria-label', label);
   toggle.title = label;
 }
 $('#outline-toggle').addEventListener('click', () => {
-  outlineHidden = !outlineHidden;
+  if (window.matchMedia('(max-width: 1000px)').matches) compactOutlineOpen = !compactOutlineOpen;
+  else outlineHidden = !outlineHidden;
   updateOutline();
   applyPanelWidths();
   savePanelWidths();
 });
+function closeCompactOutline() {
+  compactOutlineOpen = false;
+  updateOutline();
+  $('#outline-toggle').focus();
+}
+$('#close-outline').addEventListener('click', closeCompactOutline);
+$('#outline').addEventListener('click', event => {
+  if (event.target.closest('[data-anchor]') && compactOutlineOpen) closeCompactOutline();
+});
+function updateSidebarToggle() {
+  const mobile = window.matchMedia('(max-width: 760px)').matches;
+  const visible = mobile ? $('#sidebar').classList.contains('open') : !sidebarHidden;
+  $('.workspace').classList.toggle('sidebar-hidden', sidebarHidden);
+  $('#sidebar').inert = !visible;
+  const button = $('#sidebar-toggle');
+  button.setAttribute('aria-expanded', String(visible));
+  button.setAttribute('aria-controls', 'sidebar');
+  button.setAttribute('aria-label', visible ? 'Hide navigation' : 'Show navigation');
+  button.title = visible ? 'Hide navigation' : 'Show navigation';
+}
 function refreshEditorGeometry() {
   if (mode === 'edit') $('#source-mirror').style.width = `${$('#source').clientWidth}px`;
 }
@@ -414,7 +471,7 @@ function applyPanelWidths() {
   refreshEditorGeometry();
 }
 function savePanelWidths() {
-  try { localStorage.setItem(layoutStorageKey, JSON.stringify({ ...panelWidths, outlineHidden, sections: sectionCollapsed })); } catch { /* Keep widths for the current session. */ }
+  try { localStorage.setItem(layoutStorageKey, JSON.stringify({ ...panelWidths, sidebarHidden, outlineHidden, sections: sectionCollapsed })); } catch { /* Keep widths for the current session. */ }
 }
 function updateSections() {
   for (const key of ['blog', 'class']) {
@@ -484,6 +541,8 @@ bindPanelResize('outline', -1);
 document.fonts?.ready.then(refreshEditorGeometry);
 document.fonts?.addEventListener('loadingdone', refreshEditorGeometry);
 window.addEventListener('resize', () => {
+  updateSidebarToggle();
+  updateOutline();
   applyPanelWidths();
   if (!window.matchMedia('(max-width: 760px)').matches || !$('#sidebar').classList.contains('open')) closeSidebar();
   if (mode === 'edit') requestAnimationFrame(renderPreview);

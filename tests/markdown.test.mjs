@@ -6,6 +6,28 @@ import { highlightCode } from '../web/highlight.js';
 const imageUrl = 'https://velog.velcdn.com/images/ryoong1125/post/4d7d749d-b56f-4893-9efc-6e244842b064/image.jpg';
 const render = (source) => parseMarkdown(source).map((block) => block.html).join('');
 
+test('color spans allow only color styling and preserve code and HTML escaping', () => {
+  assert.equal(inline('<span style="color: #75dfc6;">**Mint**</span>'), '<span style="color: #75dfc6"><strong>Mint</strong></span>');
+  assert.equal(inline("<span style='color: red'>R <span style='color: blue'>B</span></span>"), '<span style="color: red">R <span style="color: blue">B</span></span>');
+  for (const input of ['<span style="color: red; background: url(x)">x</span>', '<span style="color: red" onclick="alert(1)">x</span>', '<span style="color: expression(alert(1))">x</span>']) assert.ok(!inline(input).includes('<span'));
+  assert.ok(inline('<span style="color: red"><script>alert(1)</script></span>').includes('&lt;script&gt;'));
+  assert.ok(inline('`<span style="color: red">x</span>`').startsWith('<code>&lt;span'));
+});
+
+test('Kotlin aliases highlight declarations, types, strings and comments', () => {
+  for (const lang of ['kotlin', 'kt', 'kts']) {
+    const html = highlightCode('suspend fun greet(name: String): Int { val n = 1; println("Hi") } // comment', lang);
+    for (const [kind, value] of [['keyword', 'suspend'], ['keyword', 'fun'], ['keyword', 'val'], ['type', 'Int'], ['type', 'String'], ['function', 'greet'], ['number', '1'], ['comment', '// comment']]) assert.ok(html.includes(`class="token ${kind}">${value}</span>`), lang + ':' + value);
+  }
+});
+
+test('code copy control is separate from the escaped code payload', () => {
+  const html = render('```html\n<div>original</div>\n```');
+  assert.match(html, /<button type="button" class="code-copy"/);
+  assert.match(html, /<\/button><code>/);
+  assert.ok(!html.includes('<div>original</div>'));
+});
+
 test('bold text supports inline code and preserves code delimiters safely', () => {
   assert.equal(inline('**`word`**'), '<strong><code>word</code></strong>');
   assert.equal(inline('**앞 `a**b` 뒤**'), '<strong>앞 <code>a**b</code> 뒤</strong>');

@@ -31,8 +31,11 @@ function highlightMarkup(source) {
 
 export function highlightCode(source, language = 'text') {
   const lang = language.trim().split(/\s/)[0].toLowerCase();
+  const kotlin = ['kotlin', 'kt', 'kts'].includes(lang);
   if (['html', 'htm', 'xml', 'svg'].includes(lang)) return highlightMarkup(source);
-  if (!supported.has(lang)) return escape(source);
+  if (!supported.has(lang) && !kotlin) return escape(source);
+  const kotlinKeywords = new Set('fun val when object companion data sealed suspend inline reified override open internal protected lateinit by constructor init get set where out actual expect external infix operator tailrec vararg crossinline noinline annotation dynamic field file property receiver param setparam delegate final abstract inner value const'.split(' '));
+  const kotlinTypes = new Set('Int Long Short Byte Float Double Char Boolean String Unit Any Nothing List MutableList Map MutableMap Set MutableSet Array IntArray LongArray Sequence'.split(' '));
   const python = ['py', 'python', 'bash', 'sh'].includes(lang);
   const tokens = /("""[\s\S]*?(?:"""|$)|'''[\s\S]*?(?:'''|$)|"(?:\\[\s\S]|[^"\\])*"|'(?:\\[\s\S]|[^'\\])*'|`(?:\\[\s\S]|[^`\\])*`|\/\*[\s\S]*?(?:\*\/|$)|\/\/[^\n]*|#[^\n]*|\b(?:0x[\da-fA-F]+|\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)[uUfF]?\b|[A-Za-z_$][\w$]*)/g;
   let html = '', cursor = 0;
@@ -44,8 +47,8 @@ export function highlightCode(source, language = 'text') {
     else if (token.startsWith('//') || token.startsWith('/*') || (python && token.startsWith('#'))) kind = 'comment';
     else if (token.startsWith('#')) kind = 'keyword';
     else if (/^\d/.test(token)) kind = 'number';
-    else if (keywords.has(token)) kind = 'keyword';
-    else if (types.has(token)) kind = 'type';
+    else if (keywords.has(token) || (kotlin && kotlinKeywords.has(token))) kind = 'keyword';
+    else if (types.has(token) || (kotlin && kotlinTypes.has(token))) kind = 'type';
     else if (/^\s*\(/.test(source.slice(match.index + token.length))) kind = 'function';
     else kind = 'variable';
     html += `<span class="token ${kind}">${escape(token)}</span>`;

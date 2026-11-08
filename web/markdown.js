@@ -86,6 +86,22 @@ export function inline(text, depth = 0) {
     }
     const code = rest.match(/^(`+)([\s\S]*?)\1(?!`)/);
     if (code) { html += `<code>${escapeHtml(code[2])}</code>`; index += code[0].length; continue; }
+    // Only a color declaration is accepted; all other raw HTML stays escaped.
+    const colored = rest.match(/^<span\s+style\s*=\s*(["'])\s*color\s*:\s*([^"';]+)\s*;?\s*\1\s*>/i);
+    if (colored) {
+      const color = colored[2].trim();
+      const safeColor = /^(?:[a-z]+|#[\da-f]{3,4}|#[\da-f]{6}|#[\da-f]{8}|(?:rgb|rgba|hsl|hsla)\([\d\s.,%+\-/deg]+\))$/i.test(color);
+      let nesting = 1, closing;
+      for (const tag of rest.slice(colored[0].length).matchAll(/<span\b[^>]*>|<\/span\s*>/gi)) {
+        nesting += /^<\//.test(tag[0]) ? -1 : 1;
+        if (!nesting) { closing = tag; break; }
+      }
+      if (safeColor && closing) {
+        const end = colored[0].length + closing.index;
+        html += `<span style="color: ${escapeHtml(color)}">${inline(rest.slice(colored[0].length, end), depth + 1)}</span>`;
+        index += end + closing[0].length; continue;
+      }
+    }
     if (rest[0] === '$' && rest[1] !== '$' && text[index - 1] !== '$') {
       const end = closingDollar(text, index + 1, '$');
       const math = text.slice(index + 1, end);
@@ -191,7 +207,7 @@ export function parseMarkdown(source, mediaSamples = [], depth = 0) {
       while (index < lines.length && !closing.test(lines[index].text)) content.push(lines[index++].text);
       if (index < lines.length) index++;
       const language = fence[2].trim() || 'text';
-      html = `<pre data-language="${escapeHtml(language)}"><code>${highlightCode(content.join('\n'), language)}</code></pre>`;
+      html = `<pre data-language="${escapeHtml(language)}"><button type="button" class="code-copy" aria-label="Copy code" title="Copy code"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg></button><code>${highlightCode(content.join('\n'), language)}</code></pre>`;
     } else if (math) {
       index = math.end;
       html = `<div class="formula">${renderMath(math.source, true)}</div>`;
