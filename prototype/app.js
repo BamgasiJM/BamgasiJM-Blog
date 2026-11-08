@@ -40,6 +40,7 @@ const layoutStorageKey = 'bamgasijm-panel-widths-v1';
 let panelWidths = { sidebar: 288, outline: 216 };
 let mode = 'read';
 let outlineHidden = false;
+const sectionCollapsed = { blog: false, class: false };
 let dirty = false;
 let storageAvailable = true;
 let toastTimer;
@@ -63,6 +64,7 @@ try {
 try {
   const savedLayout = JSON.parse(localStorage.getItem(layoutStorageKey) || 'null');
   outlineHidden = savedLayout?.outlineHidden === true;
+  for (const key of ['blog', 'class']) sectionCollapsed[key] = savedLayout?.sections?.[key] === true;
   for (const key of ['sidebar', 'outline']) {
     if (Number.isFinite(savedLayout?.[key])) panelWidths[key] = savedLayout[key];
   }
@@ -86,11 +88,11 @@ function rendered(chunks, prefix) {
   return chunks.map((block, index) => `<div data-block="${index}" id="${prefix}-${index}">${block.html}</div>`).join('');
 }
 function postButton(post) {
-  return `<button class="tree-post ${post.id === selected ? 'selected' : ''}" data-post="${escapeHtml(post.id)}" title="${escapeHtml(post.title)}" ${post.id === selected ? 'aria-current="page"' : ''}><span class="file-icon" aria-hidden="true">▱</span><span class="title">${escapeHtml(post.title)}</span>${post.loaded && post.published === null ? '<span class="draft-dot" title="초안" aria-label="초안"></span>' : ''}</button>`;
+  return `<button class="tree-post ${post.id === selected ? 'selected' : ''}" data-post="${escapeHtml(post.id)}" title="${escapeHtml(post.title)}" ${post.id === selected ? 'aria-current="page"' : ''}><span class="title">${escapeHtml(post.title)}</span>${post.loaded && post.published === null ? '<span class="draft-dot" title="초안" aria-label="초안"></span>' : ''}</button>`;
 }
 function folderHtml(folder) {
   const isCollapsed = !query && collapsed.has(folder.id);
-  return `<div class="folder"><button class="folder-toggle" data-folder="${escapeHtml(folder.id)}" aria-expanded="${!isCollapsed}" title="${escapeHtml(folder.title)}"><span class="chevron" aria-hidden="true">⌄</span><span class="folder-icon" aria-hidden="true">▱</span><span class="folder-title">${escapeHtml(folder.title)}</span></button><div class="folder-children" ${isCollapsed ? 'hidden' : ''}>${isCollapsed ? '' : folder.children.map(folderHtml).join('') + folder.posts.map(postButton).join('')}</div></div>`;
+  return `<div class="folder"><button class="folder-toggle" data-folder="${escapeHtml(folder.id)}" aria-expanded="${!isCollapsed}" title="${escapeHtml(folder.title)}"><span class="folder-title">${escapeHtml(folder.title)}</span></button><div class="folder-children" ${isCollapsed ? 'hidden' : ''}>${isCollapsed ? '' : folder.children.map(folderHtml).join('') + folder.posts.map(postButton).join('')}</div></div>`;
 }
 function allFoldersExpanded() {
   const tree = buildTree(blogPosts());
@@ -393,7 +395,26 @@ function applyPanelWidths() {
   refreshEditorGeometry();
 }
 function savePanelWidths() {
-  try { localStorage.setItem(layoutStorageKey, JSON.stringify({ ...panelWidths, outlineHidden })); } catch { /* Keep widths for the current session. */ }
+  try { localStorage.setItem(layoutStorageKey, JSON.stringify({ ...panelWidths, outlineHidden, sections: sectionCollapsed })); } catch { /* Keep widths for the current session. */ }
+}
+function updateSections() {
+  for (const key of ['blog', 'class']) {
+    const closed = sectionCollapsed[key];
+    $(`.${key}-section`).classList.toggle('section-collapsed', closed);
+    $(`#${key}-section-body`).hidden = closed;
+    const button = $(`#${key}-section-toggle`);
+    button.setAttribute('aria-expanded', String(!closed));
+    const label = `${closed ? 'Expand' : 'Collapse'} ${key === 'blog' ? 'Generative Art blog' : 'Class materials'}`;
+    button.title = label;
+    button.setAttribute('aria-label', label);
+  }
+}
+for (const key of ['blog', 'class']) {
+  $(`#${key}-section-toggle`).addEventListener('click', () => {
+    sectionCollapsed[key] = !sectionCollapsed[key];
+    updateSections();
+    savePanelWidths();
+  });
 }
 function bindPanelResize(key, direction) {
   const handle = $(`#${key}-resizer`);
@@ -449,7 +470,7 @@ window.addEventListener('resize', () => {
   if (mode === 'edit') requestAnimationFrame(renderPreview);
 });
 window.addEventListener('beforeunload', (event) => { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
-renderTree(); renderArticle(); updateThemeLabel(); updateCodeLabel(); updateOutline();
+renderTree(); renderArticle(); updateThemeLabel(); updateCodeLabel(); updateOutline(); updateSections();
 applyPanelWidths();
 initializeContent();
 closeSidebar();

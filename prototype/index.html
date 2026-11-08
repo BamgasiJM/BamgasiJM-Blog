@@ -20,13 +20,13 @@
       <div class="sidebar-header"><a class="brand" href="#" aria-label="BamgasiJM BLOG 홈"><span>BamgasiJM</span><span class="brand-suffix">BLOG</span></a><button class="icon-button mobile-close" id="close-sidebar" aria-label="탐색기 닫기">×</button></div>
       <div class="explorer-label"><button id="introduction-link" class="introduction-link selected" aria-current="page">Introduction</button><button class="icon-button" id="new-note" aria-label="새 초안 만들기" title="새 초안 만들기" hidden>+</button></div>
       <section class="blog-section" aria-labelledby="blog-section-title">
-      <h2 class="sidebar-section-title" id="blog-section-title">Generative Art 블로그</h2>
-      <div class="tree-search-wrap"><input id="tree-search" type="search" placeholder="Search folders and posts" aria-label="Search folders and posts" autocomplete="off"></div>
-      <div class="tree-actions"><button id="toggle-folders" class="icon-button" aria-controls="tree" aria-label="Expand all folders" title="Expand all folders" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path id="folder-toggle-path" d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg></button></div>
+      <div class="sidebar-section-header"><h2 class="sidebar-section-title" id="blog-section-title">Generative Art 블로그</h2><button id="blog-section-toggle" class="icon-button section-toggle" aria-controls="blog-section-body" aria-expanded="true" aria-label="Collapse Generative Art blog" title="Collapse Generative Art blog"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
+      <div class="section-body" id="blog-section-body">
+      <div class="tree-search-wrap"><input id="tree-search" type="search" placeholder="Search folders and posts" aria-label="Search folders and posts" autocomplete="off"><button id="toggle-folders" class="icon-button" aria-controls="tree" aria-label="Expand all folders" title="Expand all folders" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path id="folder-toggle-path" d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg></button></div>
       <div class="library-feedback"><span id="library-status" role="status"></span><button id="retry-library" hidden>다시 시도</button></div>
       <nav id="tree" class="tree" aria-label="Generative Art 폴더와 글"></nav>
-      </section>
-      <section class="class-section" aria-labelledby="class-section-title"><h2 class="sidebar-section-title" id="class-section-title">Class 수업자료</h2><nav id="class-tree" class="class-tree" aria-label="수업과 주차별 자료"></nav></section>
+      </div></section>
+      <section class="class-section" aria-labelledby="class-section-title"><div class="sidebar-section-header"><h2 class="sidebar-section-title" id="class-section-title">Class 수업자료</h2><button id="class-section-toggle" class="icon-button section-toggle" aria-controls="class-section-body" aria-expanded="true" aria-label="Collapse Class materials" title="Collapse Class materials"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div><div class="section-body" id="class-section-body"><nav id="class-tree" class="class-tree" aria-label="수업과 주차별 자료"></nav></div></section>
     </aside>
     <div id="sidebar-resizer" class="panel-resizer" role="separator" aria-label="글 목록 너비 조절" aria-controls="sidebar" aria-orientation="vertical" aria-valuemin="220" aria-valuemax="560" aria-valuenow="288" tabindex="0"></div>
     <div class="scrim" id="scrim" hidden></div>
