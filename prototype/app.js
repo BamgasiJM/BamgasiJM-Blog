@@ -222,7 +222,7 @@ async function selectPost(id) {
   $('#article').setAttribute('aria-busy', 'true');
   try {
     if (!next.loaded) {
-      const source = await requestText(staticContent ? next.contentUrl : '/api/post?' + (next.id.startsWith('drive:') ? 'id=' + encodeURIComponent(next.id) : 'path=' + encodeURIComponent(next.path)));
+      const source = await requestText(staticContent ? next.contentUrl : '/api/post?path=' + encodeURIComponent(next.path));
       next.published = source;
       next.draft = typeof savedDrafts[next.id] === 'string' ? savedDrafts[next.id] : source;
       next.loaded = true;

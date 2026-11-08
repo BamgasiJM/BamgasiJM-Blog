@@ -28,7 +28,7 @@ export function createPreviewServer({ contentDirectory, library = { list: () => 
       const url = new URL(request.url, 'http://127.0.0.1');
       if (url.pathname === '/favicon.ico') { response.writeHead(204); response.end(); return; }
       if (url.pathname === '/api/content') { send(200, 'application/json; charset=utf-8', JSON.stringify(await library.list())); return; }
-      if (url.pathname === '/api/post') { send(200, 'text/markdown; charset=utf-8', await library.read(url.searchParams.get('id') || url.searchParams.get('path'))); return; }
+      if (url.pathname === '/api/post') { send(200, 'text/markdown; charset=utf-8', await library.read(url.searchParams.get('path'))); return; }
       const katexAsset = url.pathname.match(/^\/node_modules\/katex\/dist\/(katex\.mjs|katex\.min\.css|fonts\/KaTeX_[A-Za-z0-9_-]+\.(?:woff2?|ttf))$/)?.[1];
       if (katexAsset) {
         const extension = path.extname(katexAsset);
