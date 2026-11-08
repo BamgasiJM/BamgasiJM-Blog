@@ -114,6 +114,7 @@ button:disabled { opacity: .4; cursor: default; }
 #course-pdf { display: block; width: 100%; height: 100%; flex: 1; min-height: 0; border: 0; background: var(--surface); }
 .article-scroll { flex: 1; min-width: 0; overflow: auto; scroll-behavior: smooth; }
 .article { max-width: 912px; padding: 65px 64px 100px; margin: auto; }
+.article-cover { display: block; width: 100%; height: auto; margin: 0 0 32px; }
 .article h1 { font-size: clamp(29px, 2.7vw, 40px); letter-spacing: -1.5px; line-height: 1.4; margin: 0 0 46px; font-weight: 730; word-break: keep-all; }
 .prose { font-size: 17px; line-height: 1.95; word-break: keep-all; overflow-wrap: anywhere; }
 .prose h2 { font-size: 25px; letter-spacing: -.7px; line-height: 1.5; margin: 38px 0 18px; font-weight: 680; scroll-margin-top: 25px; }

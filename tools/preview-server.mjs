@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
-import { listMarkdown, readMarkdown } from './content-library.mjs';
+import { listMarkdown, readMarkdown, readCover } from './content-library.mjs';
 
 const projectRoot = fileURLToPath(new URL('../', import.meta.url));
 const routes = new Map([
@@ -32,6 +32,7 @@ export function createPreviewServer({ contentDirectory, library = { list: () => 
       if (icon) { send(200, icon.endsWith('.ico') ? 'image/x-icon' : 'image/png', await readFile(new URL(`../img/${icon}`, import.meta.url))); return; }
       if (url.pathname === '/api/content') { send(200, 'application/json; charset=utf-8', JSON.stringify(await library.list())); return; }
       if (url.pathname === '/api/post') { send(200, 'text/markdown; charset=utf-8', await library.read(url.searchParams.get('path'))); return; }
+      if (url.pathname === '/api/cover') { send(200, 'image/jpeg', await readCover(contentDirectory, url.searchParams.get('path'))); return; }
       const katexAsset = url.pathname.match(/^\/node_modules\/katex\/dist\/(katex\.mjs|katex\.min\.css|fonts\/KaTeX_[A-Za-z0-9_-]+\.(?:woff2?|ttf))$/)?.[1];
       if (katexAsset) {
         const extension = path.extname(katexAsset);

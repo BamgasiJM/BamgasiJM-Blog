@@ -16,6 +16,8 @@ test('static build works without source/API, bundles KaTeX, excludes drafts and 
   await writeFile(path.join(source, 'hidden.md'), '---\npublished: false\n---\n비공개');
   await writeFile(path.join(source, '.secret.md'), '비밀');
   await writeFile(path.join(source, '.env'), 'SECRET=hidden');
+  const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xd9]);
+  await writeFile(path.join(source, '한글 # 폴더', '작품.JPEG'), jpeg);
   const result = await buildSite({ workspace, contentDirectory: source });
   assert.equal(result.posts, 1);
   assert.equal(result.excluded, 1);
@@ -25,12 +27,17 @@ test('static build works without source/API, bundles KaTeX, excludes drafts and 
   const manifest = JSON.parse(await readFile(path.join(output, 'content', 'index.json'), 'utf8'));
   assert.equal(manifest[0].path, '한글 # 폴더/글 & 1.md');
   assert.match(manifest[0].contentUrl, /^\/content\/posts\/[a-f0-9]{64}\.md$/);
+  assert.match(manifest[0].coverUrl, /^\/content\/covers\/[a-f0-9]{64}\.jpg$/);
+  assert.equal(manifest[0].coverPath, undefined);
   assert.ok(!JSON.stringify(manifest).includes('hidden.md'));
   await rm(source, { recursive: true }); // Deployment cannot depend on source availability.
   const server = createStaticServer(output);
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
   t.after(() => new Promise(resolve => server.close(resolve)));
   const origin = `http://127.0.0.1:${server.address().port}`;
+  const cover = await fetch(origin + manifest[0].coverUrl);
+  assert.equal(cover.headers.get('content-type'), 'image/jpeg');
+  assert.deepEqual(Buffer.from(await cover.arrayBuffer()), jpeg);
   assert.equal(await (await fetch(origin + manifest[0].contentUrl)).text(), '# 공개 글\n\n$a>0$');
   for (const asset of ['/', '/app.js', '/courses.js', '/course-library.js', '/content/index.json', '/vendor/katex/katex.mjs', '/vendor/katex/katex.min.css', '/vendor/katex/fonts/KaTeX_Main-Regular.woff2']) assert.equal((await fetch(origin + asset)).status, 200, asset);
   for (const asset of ['/favicon.ico', '/img/favicon.ico', '/img/favicon-32x32.png', '/img/favicon-16x16.png', '/img/apple-touch-icon.png']) {

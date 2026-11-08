@@ -2,7 +2,7 @@ import { cp, readFile, writeFile, mkdir, mkdtemp, rename, rm, lstat, realpath } 
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
-import { listMarkdown, readMarkdown } from './content-library.mjs';
+import { listMarkdown, readMarkdown, readCover } from './content-library.mjs';
 
 const projectRoot = fileURLToPath(new URL('../', import.meta.url));
 const assets = ['index.html', 'app.js', 'styles.css', 'markdown.js', 'highlight.js', 'library.js', 'scroll-sync.js', 'introduction.md', 'courses.js', 'course-library.js'];
@@ -51,6 +51,7 @@ export async function buildSite({ contentDirectory, workspace = projectRoot } = 
     for (const file of ['katex.mjs', 'katex.min.css', 'fonts']) await cp(path.join(projectRoot, 'node_modules', 'katex', 'dist', file), path.join(vendor, file), { recursive: true });
     await cp(path.join(projectRoot, 'node_modules', 'katex', 'LICENSE'), path.join(vendor, 'LICENSE'));
     const manifest = [];
+    const covers = new Map();
     let excluded = 0;
     for (const entry of entries) {
       const result = publication(await readMarkdown(input, entry.path));
@@ -60,7 +61,20 @@ export async function buildSite({ contentDirectory, workspace = projectRoot } = 
       if (bytes > 2 * 1024 * 1024) throw new Error(`Markdown exceeds 2MB: ${entry.path}`);
       const contentUrl = '/content/posts/' + filename;
       await writeFile(path.join(stage, contentUrl.slice(1)), result.source);
-      manifest.push({ ...entry, contentUrl });
+      const { coverPath, coverUrl: localCoverUrl, ...metadata } = entry;
+      let coverUrl;
+      if (coverPath) {
+        coverUrl = covers.get(coverPath);
+        if (!coverUrl) {
+          const image = await readCover(input, coverPath);
+          if (image.length > 25 * 1024 * 1024) throw new Error(`Title image exceeds 25MB: ${coverPath}`);
+          coverUrl = '/content/covers/' + createHash('sha256').update(image).digest('hex') + '.jpg';
+          await mkdir(path.join(stage, 'content', 'covers'), { recursive: true });
+          await writeFile(path.join(stage, coverUrl.slice(1)), image);
+          covers.set(coverPath, coverUrl);
+        }
+      }
+      manifest.push({ ...metadata, contentUrl, ...(coverUrl ? { coverUrl } : {}) });
     }
     if (!manifest.length) throw new Error('No published Markdown files. Previous build is preserved.');
     await writeFile(path.join(stage, 'content', 'index.json'), JSON.stringify(manifest));

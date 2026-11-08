@@ -183,6 +183,14 @@ function renderArticle() {
   const title = articleBlocks.find((block) => block.level === 1)?.heading || post.title;
   $('#article').innerHTML = `<h1>${escapeHtml(title)}</h1><div class="prose">${articleBlocks.map((block, index) => block.level === 1 ? '' : `<div id="read-${index}">${block.html}</div>`).join('')}</div>`;
   $('#outline').innerHTML = articleBlocks.map((block, index) => block.level >= 2 && block.level <= 3 ? `<button data-anchor="read-${index}">${escapeHtml(block.heading)}</button>` : '').join('');
+  if (post.coverUrl && selected !== introId && post.section !== 'class') {
+    const cover = document.createElement('img');
+    cover.className = 'article-cover';
+    cover.alt = '';
+    cover.src = post.coverUrl;
+    cover.addEventListener('error', () => cover.remove(), { once: true });
+    $('#article').prepend(cover);
+  }
 }
 function renderPreview() {
   editorScroll.updatePreview(() => {

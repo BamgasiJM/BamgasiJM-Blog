@@ -4,9 +4,34 @@ import { mkdtemp, mkdir, writeFile, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { once } from 'node:events';
-import { listMarkdown, readMarkdown } from '../tools/content-library.mjs';
+import { listMarkdown, readMarkdown, readCover } from '../tools/content-library.mjs';
 import { createPreviewServer } from '../tools/preview-server.mjs';
 import { buildTree, filterTree } from '../web/library.js';
+
+test('folder covers inherit, override, reject ambiguous images and serve safely', async t => {
+  const root = await mkdtemp(path.join(tmpdir(), 'bamgasi-covers-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await mkdir(path.join(root, '하위', 'deeper'), { recursive: true });
+  await writeFile(path.join(root, 'root.jpg'), 'root-image');
+  await writeFile(path.join(root, 'one.md'), '# One');
+  await writeFile(path.join(root, '하위', 'two.md'), '# Two');
+  await writeFile(path.join(root, '하위', 'custom.JPEG'), 'child-image');
+  await writeFile(path.join(root, '하위', 'deeper', 'three.md'), '# Three');
+  const files = await listMarkdown(root);
+  assert.equal(files.find(post => post.id === 'one.md').coverPath, 'root.jpg');
+  const nested = files.find(post => post.id.endsWith('three.md'));
+  assert.equal(nested.coverPath, '하위/custom.JPEG');
+  assert.equal((await readCover(root, nested.coverPath)).toString(), 'child-image');
+  for (const invalid of ['../outside.jpg', 'one.md', '.hidden.jpg', '하위/../root.jpg']) await assert.rejects(readCover(root, invalid));
+  const server = createPreviewServer({ contentDirectory: root });
+  server.listen(0, '127.0.0.1'); await once(server, 'listening');
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const response = await fetch(`http://127.0.0.1:${server.address().port}` + nested.coverUrl);
+  assert.equal(response.headers.get('content-type'), 'image/jpeg');
+  assert.equal(await response.text(), 'child-image');
+  await writeFile(path.join(root, 'second.jpg'), 'ambiguous');
+  await assert.rejects(listMarkdown(root), /Multiple title images.*root/);
+});
 
 test('content API discovers Unicode folders and reads only Markdown inside the configured root', async t => {
   const directory = await mkdtemp(path.join(tmpdir(), 'bamgasi-content-'));
