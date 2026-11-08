@@ -38,8 +38,7 @@ const mediaSamples = [
   { id: 'sample-pdf', type: 'PDF', name: 'rhino-python-notes.pdf', detail: '문서 · Drive 미리보기', icon: '▤' },
 ];
 const introId = '@introduction';
-const initialIntroduction = '# BamgasiJM\n\n크리에이티브 코딩 탐구하는 디자이너';
-let posts = [{ id: introId, title: 'Introduction', draft: initialIntroduction, published: initialIntroduction, loaded: true }];
+let posts = [{ id: introId, title: 'Introduction', draft: '', published: null, loaded: true }];
 posts.push(...coursePosts(courses));
 const blogPosts = () => posts.filter(post => post.id !== introId && post.section !== 'class');
 let selected = introId;
@@ -194,6 +193,11 @@ function renderArticle() {
   frame.removeAttribute('src');
   const source = post.published;
   $('#article').classList.toggle('introduction-page', selected === introId);
+  if (selected === introId && source === null) {
+    $('#article').replaceChildren();
+    $('#outline').replaceChildren();
+    return;
+  }
   if (!source) {
     $('#article').innerHTML = `<h1>${escapeHtml(post.title)}</h1><button class="button" id="edit-empty">초안 편집</button>`;
     $('#edit-empty').addEventListener('click', () => setMode('edit'));
