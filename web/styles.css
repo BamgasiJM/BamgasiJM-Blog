@@ -125,6 +125,12 @@ button:disabled { opacity: .4; cursor: default; }
 .introduction-page h1 { margin-bottom: 20px; }
 .introduction-page .prose > div:first-child > p { font-size: 24px; line-height: 1.6; margin-bottom: 50px; letter-spacing: -.6px; }
 .prose strong { font-weight: 650; }
+.prose ul, .prose ol { padding-left: 1.6em; margin: 0 0 23px; }
+.prose ul { list-style-type: disc; }
+.prose ul ul { list-style-type: circle; }
+.prose li { padding-left: .2em; margin: 6px 0; }
+.prose li > ul, .prose li > ol { margin-top: 6px; margin-bottom: 6px; }
+.prose li > p { margin-bottom: 8px; }
 .prose a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
 .prose img { display: block; max-width: 100%; height: auto; margin: 24px auto; border-radius: 5px; }
 .prose code { font-family: var(--font-code); font-size: .84em; background: var(--code); border-radius: 3px; padding: 2px 5px; }
@@ -132,6 +138,9 @@ button:disabled { opacity: .4; cursor: default; }
 .prose pre::before { content: attr(data-language); position: absolute; left: 22px; top: 10px; color: var(--muted); font-family: var(--font-code); font-size: 12px; }
 .prose pre code { background: none; padding: 0; font-size: inherit; white-space: pre; }
 .token.keyword { color: #ad3053; }
+.token.tag { color: #ad3053; }
+.token.attribute { color: #176a9c; }
+.token.punctuation { color: #626262; }
 .token.string { color: #21724c; }
 .token.number { color: #a15716; }
 .token.function { color: #176a9c; }
@@ -211,6 +220,9 @@ body.dark {
   color-scheme: dark;
 }
 .dark .token.keyword { color: #f3a0b5; }
+.dark .token.tag { color: #f3a0b5; }
+.dark .token.attribute { color: #8fceea; }
+.dark .token.punctuation { color: #b6b6b6; }
 .dark .token.string { color: #a2d5a6; }
 .dark .token.number { color: #e9bb87; }
 .dark .token.function { color: #8fceea; }

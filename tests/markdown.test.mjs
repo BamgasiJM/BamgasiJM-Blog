@@ -6,6 +6,50 @@ import { highlightCode } from '../web/highlight.js';
 const imageUrl = 'https://velog.velcdn.com/images/ryoong1125/post/4d7d749d-b56f-4893-9efc-6e244842b064/image.jpg';
 const render = (source) => parseMarkdown(source).map((block) => block.html).join('');
 
+test('bold text supports inline code and preserves code delimiters safely', () => {
+  assert.equal(inline('**`word`**'), '<strong><code>word</code></strong>');
+  assert.equal(inline('**앞 `a**b` 뒤**'), '<strong>앞 <code>a**b</code> 뒤</strong>');
+  assert.equal(inline('`**literal**`'), '<code>**literal**</code>');
+  assert.equal(inline('**<script>alert(1)</script>**'), '<strong>&lt;script&gt;alert(1)&lt;/script&gt;</strong>');
+  assert.equal(inline('**`<div>`**'), '<strong><code>&lt;div&gt;</code></strong>');
+  assert.ok(inline('**중요 $a>0$**').includes('class="katex"'));
+  assert.equal(inline('**unclosed'), '**unclosed');
+});
+
+test('bulleted and ordered lists render nested content without consuming surrounding blocks', () => {
+  const source = '도입\r\n- **첫 항목**\r\n- `둘째`\r\n  - 하위 항목\r\n  - 다음 하위\r\n\r\n## 다음\r\n본문';
+  const blocks = parseMarkdown(source);
+  assert.equal(blocks.length, 4);
+  assert.equal(blocks[1].html, '<ul><li><strong>첫 항목</strong></li><li><p><code>둘째</code></p><ul><li>하위 항목</li><li>다음 하위</li></ul></li></ul>');
+  assert.equal(blocks[2].heading, '다음');
+  for (const block of blocks) assert.equal(source.slice(block.start, block.end), block.raw);
+  assert.equal(render('3. 세 번째\n4. 네 번째'), '<ol start="3"><li>세 번째</li><li>네 번째</li></ol>');
+  assert.equal(render('* 첫째\n+ 둘째'), '<ul><li>첫째</li><li>둘째</li></ul>');
+  assert.equal(render('앞\n\n---\n\n- 항목'), '<p>앞</p><hr><ul><li>항목</li></ul>');
+  assert.ok(!render('```text\n- 원문\n```').includes('<ul>'));
+});
+
+test('list continuations can include paragraphs and fenced code with markup highlighting', () => {
+  const html = render('- 첫 문단\n\n  두 번째 문단\n\n  ```html\n  <b class="test">내용</b>\n  ```\n- 다음');
+  assert.ok(html.includes('<ul><li><p>첫 문단</p><p>두 번째 문단</p><pre'));
+  assert.ok(html.includes('class="token tag">b'));
+  assert.ok(html.endsWith('</li><li>다음</li></ul>'));
+});
+
+test('HTML fences color tags, attributes, values and comments while keeping raw markup inert', () => {
+  const source = '<!-- 설명 -->\n<div class="box" data-value=10 title="a > b">내용 & more</div>\n<script>alert(1)</script>';
+  for (const language of ['html', 'HTML', 'htm', 'xml', 'svg']) {
+    const html = highlightCode(source, language);
+    for (const kind of ['tag', 'attribute', 'string', 'comment', 'punctuation']) assert.ok(html.includes(`class="token ${kind}"`), kind);
+    assert.ok(html.includes('class="token tag">div</span>'));
+    assert.ok(html.includes('class="token attribute">class</span>'));
+    assert.ok(!html.includes('<div') && !html.includes('<script>'));
+    assert.ok(html.includes('&amp; more'));
+  }
+  assert.ok(render('```html\n'+source+'\n```').includes('class="token tag"'));
+  assert.ok(!render(source).includes('class="token tag"'));
+});
+
 test('the reported Velog image renders even with empty alternative text', () => {
   const html = render(`![](${imageUrl})`);
   assert.ok(html.includes(`<img src="${imageUrl}" alt=""`));

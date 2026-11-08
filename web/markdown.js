@@ -76,7 +76,8 @@ function readLink(text, start) {
   return { image, label: label.replace(/\\([\[\]\\])/g, '$1'), destination, title, end: cursor + 1 };
 }
 
-export function inline(text) {
+export function inline(text, depth = 0) {
+  if (depth > 24) return escapeHtml(text);
   let html = '';
   for (let index = 0; index < text.length;) {
     const rest = text.slice(index);
@@ -103,8 +104,19 @@ export function inline(text) {
         index = link.end; continue;
       }
     }
-    const bold = rest.match(/^\*\*([^*]+)\*\*/);
-    if (bold) { html += `<strong>${escapeHtml(bold[1])}</strong>`; index += bold[0].length; continue; }
+    if (rest.startsWith('**')) {
+      let end = 2;
+      for (; end < rest.length; end++) {
+        if (rest[end] === '\\') { end++; continue; }
+        const span = rest.slice(end).match(/^(`+)([\s\S]*?)\1(?!`)/);
+        if (span) { end += span[0].length - 1; continue; }
+        if (rest.startsWith('**', end)) break;
+      }
+      if (end > 2 && end < rest.length) {
+        html += `<strong>${inline(rest.slice(2, end), depth + 1)}</strong>`;
+        index += end + 2; continue;
+      }
+    }
     html += text[index] === '\n' ? '<br>' : escapeHtml(text[index]); index++;
   }
   return html;
@@ -134,7 +146,7 @@ function tableAt(lines, index) {
   return { headers, alignments: delimiters.map((cell) => cell.startsWith(':') && cell.endsWith(':') ? 'center' : cell.endsWith(':') ? 'right' : 'left') };
 }
 
-export function parseMarkdown(source, mediaSamples = []) {
+export function parseMarkdown(source, mediaSamples = [], depth = 0) {
   // Keep original offsets, including CRLF, for the editor's scroll mapping.
   const lines = Array.from(source.matchAll(/[^\r\n]*(?:\r\n|\r|\n|$)/g), (match) => ({
     text: match[0].replace(/[\r\n]+$/, ''), start: match.index, end: match.index + match[0].length,
@@ -143,6 +155,11 @@ export function parseMarkdown(source, mediaSamples = []) {
   const fenceAt = (index) => lines[index]?.text.match(/^ {0,3}(`{3,}|~{3,})([^\n]*)$/);
   const headingAt = (index) => lines[index]?.text.match(/^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/);
   const ruleAt = (index) => /^ {0,3}(?:(?:-\s*){3,}|(?:\*\s*){3,}|(?:_\s*){3,})$/.test(lines[index]?.text || '');
+  const listAt = (index) => {
+    if (depth > 24 || ruleAt(index)) return null;
+    const match = lines[index]?.text.match(/^( *)([-+*]|\d{1,9}[.)])([ \t]+)(.*)$/);
+    return match && { indent: match[1].length, width: match[1].length + match[2].length + match[3].length, ordered: /^\d/.test(match[2]), number: parseInt(match[2], 10), text: match[4] };
+  };
   const mathAt = (index) => {
     const opening = lines[index].text.trim();
     if (!opening.startsWith('$$')) return null;
@@ -159,7 +176,7 @@ export function parseMarkdown(source, mediaSamples = []) {
     }
     return null;
   };
-  const boundaryAt = (index) => fenceAt(index) || headingAt(index) || ruleAt(index) || /^\s*\$\$/.test(lines[index].text) || tableAt(lines, index) || /^> ?/.test(lines[index].text) || /^::media\[([a-z-]+)\]$/.test(lines[index].text);
+  const boundaryAt = (index) => fenceAt(index) || headingAt(index) || ruleAt(index) || listAt(index) || /^\s*\$\$/.test(lines[index].text) || tableAt(lines, index) || /^> ?/.test(lines[index].text) || /^::media\[([a-z-]+)\]$/.test(lines[index].text);
   let index = 0;
   while (index < lines.length) {
     if (!lines[index].text.trim()) { index++; continue; }
@@ -189,6 +206,33 @@ export function parseMarkdown(source, mediaSamples = []) {
       while (index < lines.length && lines[index].text.trim() && lines[index].text.includes('|') && !fenceAt(index) && !headingAt(index)) rows.push(splitRow(lines[index++].text));
       const cells = (values, tag) => table.headers.map((_, column) => `<${tag}${tag === 'th' ? ' scope="col"' : ''} class="align-${table.alignments[column]}">${inline(values[column] || '')}</${tag}>`).join('');
       html = `<div class="markdown-table" role="region" aria-label="본문 표" tabindex="0"><table><thead><tr>${cells(table.headers, 'th')}</tr></thead><tbody>${rows.map((row) => `<tr>${cells(row, 'td')}</tr>`).join('')}</tbody></table></div>`;
+    } else if (listAt(index)) {
+      const firstItem = listAt(index);
+      const items = [];
+      while (index < lines.length) {
+        const item = listAt(index);
+        if (!item || item.indent !== firstItem.indent || item.ordered !== firstItem.ordered) break;
+        const content = [item.text]; index++;
+        while (index < lines.length) {
+          const line = lines[index].text;
+          if (!line.trim()) {
+            let next = index + 1;
+            while (next < lines.length && !lines[next].text.trim()) next++;
+            const nextItem = listAt(next);
+            if (next < lines.length && (lines[next].text.startsWith(' '.repeat(item.width)) || (nextItem?.indent === firstItem.indent && nextItem.ordered === firstItem.ordered))) {
+              content.push(''); index++; continue;
+            }
+            break;
+          }
+          if (!line.startsWith(' '.repeat(item.width))) break;
+          content.push(line.slice(item.width)); index++;
+        }
+        const blocks = parseMarkdown(content.join('\n'), mediaSamples, depth + 1);
+        const body = blocks.map(block => block.html).join('');
+        items.push(`<li>${blocks.length === 1 && body.startsWith('<p>') ? body.slice(3, -4) : body}</li>`);
+      }
+      const tag = firstItem.ordered ? 'ol' : 'ul';
+      html = `<${tag}${firstItem.ordered && firstItem.number !== 1 ? ` start="${firstItem.number}"` : ''}>${items.join('')}</${tag}>`;
     } else if (/^> ?/.test(lines[index].text)) {
       const quote = [];
       while (index < lines.length && /^> ?/.test(lines[index].text)) quote.push(lines[index++].text.replace(/^> ?/, ''));
