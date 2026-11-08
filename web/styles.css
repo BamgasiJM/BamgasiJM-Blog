@@ -253,6 +253,7 @@ body.dark {
   /* Native document scrolling lets mobile browsers collapse their address bar. */
   .workspace:has(#reading-layout:not([hidden])) { height: auto; min-height: 100svh; }
   .main:has(#reading-layout:not([hidden])) { overflow: visible; }
+  .main:has(#reading-layout:not([hidden])) > .topbar { position: sticky; top: 0; z-index: 3; background: var(--bg); }
   #reading-layout:not([hidden]) { flex: none; display: block; }
   #reading-layout:not([hidden]) .article-scroll { overflow: visible; }
   .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 5; transform: translateX(-100%); width: 280px; transition: transform .2s; }
