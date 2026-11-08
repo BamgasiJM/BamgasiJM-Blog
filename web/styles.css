@@ -39,6 +39,8 @@ button:disabled { opacity: .4; cursor: default; }
 .dark .brand, .dark .brand:hover, .dark .brand:focus-visible,
 .dark .brand-suffix { color: #fff; }
 .sidebar { container-type: inline-size; }
+.sidebar-footer { flex-shrink: 0; margin-top: 16px; padding: 12px 5px 0; border-top: 1px solid var(--line); color: var(--muted); line-height: 1.6; }
+.sidebar-footer small { font-size: 10px; }
 .explorer-label { display: flex; min-height: 42px; align-items: center; justify-content: space-between; margin: 19px 8px 9px; color: var(--muted); font-size: 13px; }
 .introduction-link { padding: 8px 0; font-size: 16px; font-weight: 700; color: var(--accent); text-align: left; }
 .introduction-link.selected { color: var(--accent); font-weight: 700; }
@@ -61,8 +63,8 @@ button:disabled { opacity: .4; cursor: default; }
 .section-body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .blog-section.section-collapsed, .class-section.section-collapsed { flex: 0 0 auto; min-height: 0; max-height: none; }
 .section-collapsed .sidebar-section-header { padding-bottom: 0; }
-.class-section { border-top: 1px solid var(--line); padding-top: 18px; margin-top: 18px; display: flex; flex-direction: column; flex: 0 1 auto; min-height: 100px; max-height: 42%; }
-.class-tree { overflow: auto; min-height: 0; scrollbar-width: thin; overscroll-behavior: contain; }
+.class-section { border-top: 1px solid var(--line); padding-top: 18px; margin-top: 18px; display: flex; flex-direction: column; flex: 1; min-height: 100px; }
+.class-tree { flex: 1; overflow: auto; min-height: 0; scrollbar-width: thin; overscroll-behavior: contain; }
 .course-folder summary { cursor: pointer; display: flex; align-items: baseline; gap: 8px; padding: 9px 5px; font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; list-style: none; }
 .course-folder summary::-webkit-details-marker { display: none; }
 .course-folder summary::marker { content: ''; }
@@ -108,6 +110,8 @@ button:disabled { opacity: .4; cursor: default; }
 #sidebar-toggle, .mobile-close { display: none; }
 
 .reading-layout { display: flex; flex: 1; min-height: 0; }
+.pdf-layout { display: flex; flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
+#course-pdf { display: block; width: 100%; height: 100%; flex: 1; min-height: 0; border: 0; background: var(--surface); }
 .article-scroll { flex: 1; min-width: 0; overflow: auto; scroll-behavior: smooth; }
 .article { max-width: 912px; padding: 65px 64px 100px; margin: auto; }
 .article h1 { font-size: clamp(29px, 2.7vw, 40px); letter-spacing: -1.5px; line-height: 1.4; margin: 0 0 46px; font-weight: 730; word-break: keep-all; }

@@ -32,7 +32,13 @@ test('static build works without source/API, bundles KaTeX, excludes drafts and 
   t.after(() => new Promise(resolve => server.close(resolve)));
   const origin = `http://127.0.0.1:${server.address().port}`;
   assert.equal(await (await fetch(origin + manifest[0].contentUrl)).text(), '# 공개 글\n\n$a>0$');
-  for (const asset of ['/', '/app.js', '/content/index.json', '/vendor/katex/katex.mjs', '/vendor/katex/katex.min.css', '/vendor/katex/fonts/KaTeX_Main-Regular.woff2']) assert.equal((await fetch(origin + asset)).status, 200, asset);
+  for (const asset of ['/', '/app.js', '/courses.js', '/course-library.js', '/content/index.json', '/vendor/katex/katex.mjs', '/vendor/katex/katex.min.css', '/vendor/katex/fonts/KaTeX_Main-Regular.woff2']) assert.equal((await fetch(origin + asset)).status, 200, asset);
+  for (const asset of ['/favicon.ico', '/img/favicon.ico', '/img/favicon-32x32.png', '/img/favicon-16x16.png', '/img/apple-touch-icon.png']) {
+    const response = await fetch(origin + asset);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), asset.endsWith('.ico') ? 'image/x-icon' : 'image/png');
+    assert.ok((await response.arrayBuffer()).byteLength > 0);
+  }
   for (const asset of ['/api/content', '/.env', '/content.config.json', '/content/posts/not-here.md']) assert.equal((await fetch(origin + asset)).status, 404, asset);
   assert.equal((await fetch(origin + '/', { method: 'POST' })).status, 405);
 });

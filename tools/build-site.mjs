@@ -5,7 +5,7 @@ import path from 'node:path';
 import { listMarkdown, readMarkdown } from './content-library.mjs';
 
 const projectRoot = fileURLToPath(new URL('../', import.meta.url));
-const assets = ['index.html', 'app.js', 'styles.css', 'markdown.js', 'highlight.js', 'library.js', 'scroll-sync.js', 'introduction.md'];
+const assets = ['index.html', 'app.js', 'styles.css', 'markdown.js', 'highlight.js', 'library.js', 'scroll-sync.js', 'introduction.md', 'courses.js', 'course-library.js'];
 
 // Only the generated dist directory may be replaced. Never write to the source.
 async function outputPath(root) {
@@ -40,7 +40,12 @@ export async function buildSite({ contentDirectory, workspace = projectRoot } = 
   let backup;
   try {
     await mkdir(path.join(stage, 'content', 'posts'), { recursive: true });
-    for (const asset of assets) await cp(path.join(projectRoot, 'prototype', asset), path.join(stage, asset));
+    for (const asset of assets) await cp(path.join(projectRoot, 'web', asset), path.join(stage, asset));
+    await mkdir(path.join(stage, 'img'));
+    for (const icon of ['favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png']) {
+      await cp(path.join(projectRoot, 'img', icon), path.join(stage, 'img', icon));
+    }
+    await cp(path.join(projectRoot, 'img', 'favicon.ico'), path.join(stage, 'favicon.ico'));
     const vendor = path.join(stage, 'vendor', 'katex');
     await mkdir(vendor, { recursive: true });
     for (const file of ['katex.mjs', 'katex.min.css', 'fonts']) await cp(path.join(projectRoot, 'node_modules', 'katex', 'dist', file), path.join(vendor, file), { recursive: true });

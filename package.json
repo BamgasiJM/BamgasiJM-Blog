@@ -1,11 +1,11 @@
 {
-  "name": "personal-blog-design-preview",
+  "name": "bamgasijm-blog",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "node tools/preview-server.mjs",
-    "check": "node --check prototype/app.js && node --check prototype/markdown.js && node --check prototype/highlight.js && node --check prototype/library.js && node --check prototype/scroll-sync.js && node --check tools/preview-server.mjs && node --check tools/content-library.mjs && node --check tools/build-site.mjs && node --check tools/serve-site.mjs",
+    "check": "node --check web/app.js && node --check web/markdown.js && node --check web/highlight.js && node --check web/library.js && node --check web/scroll-sync.js && node --check tools/preview-server.mjs && node --check tools/content-library.mjs && node --check tools/build-site.mjs && node --check tools/serve-site.mjs && node --check web/courses.js && node --check web/course-library.js",
     "test": "node --test tests/*.test.mjs",
     "build": "node tools/build-site.mjs",
     "preview": "node tools/serve-site.mjs",

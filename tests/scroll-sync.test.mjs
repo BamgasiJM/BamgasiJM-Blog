@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createEditorScrollSync } from '../prototype/scroll-sync.js';
+import { createEditorScrollSync } from '../web/scroll-sync.js';
 
 function pane() {
   const target = new EventTarget();

@@ -1,7 +1,9 @@
-/* Local design prototype. Authentication, Drive, database and full Markdown rendering are future work. */
+/* Static blog UI shared by local development and Cloudflare Pages. */
 import { escapeHtml, parseMarkdown } from './markdown.js';
 import { buildTree, filterTree } from './library.js';
 import { createEditorScrollSync } from './scroll-sync.js';
+import { courses } from './courses.js';
+import { coursePosts } from './course-library.js';
 
 const $ = (selector) => document.querySelector(selector);
 const storageKey = 'gyeol-design-preview-v1';
@@ -20,17 +22,7 @@ const mediaSamples = [
 const introId = '@introduction';
 const initialIntroduction = '# BamgasiJM\n\n크리에이티브 코딩 탐구하는 디자이너';
 let posts = [{ id: introId, title: 'Introduction', draft: initialIntroduction, published: initialIntroduction, loaded: true }];
-const courses = [
-  ['photoshop', '명화로 배우는 포토샵', '색과 레이어로 다시 보는 명화', '명화 한 작품을 골라 색의 관계와 구도를 관찰합니다. Photoshop에서 레이어와 마스크를 사용해 나만의 이미지로 재구성합니다.', '원본과 편집본을 비교할 수 있는 이미지, 레이어를 보존한 PSD 파일'],
-  ['motion-graphics', '디지털 크리에이터를 위한 모션그래픽', '움직임의 리듬과 키프레임', '도형과 타이포그래피에 키프레임을 설정합니다. 속도 곡선을 조절하며 같은 움직임이 주는 인상의 차이를 살펴봅니다.', '5초 길이의 모션 스터디와 작업 파일'],
-  ['ai-artwork', 'AI로 빚는 나만의 아트워크', '아이디어에서 비주얼 콘셉트까지', '하나의 주제를 정하고 색감, 질감, 구도를 언어로 표현합니다. 생성 결과를 비교하고 선택한 이미지를 편집해 개인의 시각 언어를 찾아봅니다.', '콘셉트 보드와 프롬프트 실험 기록'],
-  ['digital-animation', '디지털 애니메이션', '타이밍과 간격으로 표현하는 무게', '공이 튀는 짧은 애니메이션을 만듭니다. 프레임 사이의 간격과 타이밍을 바꾸어 무게와 탄성을 표현합니다.', '바운싱 볼 애니메이션과 주요 포즈 스케치'],
-  ['ai-3d-animation', 'AI활용 3D 애니메이션', '3D 장면의 구성과 움직임 설계', 'Blender에서 기본 오브젝트, 카메라, 조명을 배치합니다. AI로 모은 시각 자료를 참고해 짧은 장면의 동작과 분위기를 설계합니다.', '장면 스틸 이미지와 간단한 카메라 애니메이션'],
-];
-posts.push(...courses.map(([key, course, topic, description, assignment]) => {
-  const source = '# 1주차 · ' + topic + '\n\n' + course + '\n\n## 수업 내용\n\n' + description + '\n\n## 실습 과제\n\n' + assignment + '\n\n## 주차별 자료\n\n수업에서 사용한 예제와 실습 노트를 정리합니다.';
-  return { id: '@class/' + key + '/week-01', section: 'class', course, courseId: key, title: '1주차 · ' + topic, draft: source, published: source, loaded: true };
-}));
+posts.push(...coursePosts(courses));
 const blogPosts = () => posts.filter(post => post.id !== introId && post.section !== 'class');
 let selected = introId;
 let selectionVersion = 0;
@@ -57,7 +49,7 @@ const editorScroll = createEditorScrollSync({
 try {
   const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
   if (saved?.drafts) savedDrafts = saved.drafts;
-  for (const post of posts) if (typeof savedDrafts[post.id] === 'string') post.draft = savedDrafts[post.id];
+  for (const post of posts) if (post.kind !== 'pdf' && typeof savedDrafts[post.id] === 'string') post.draft = savedDrafts[post.id];
   if (saved?.codeColors === false) document.body.classList.add('code-monochrome');
   document.body.classList.toggle('dark', saved?.theme !== 'light');
 } catch { storageAvailable = false; }
@@ -75,7 +67,7 @@ function toast(message) {
 }
 function persist() {
   try {
-    posts.filter(post => post.loaded && !post.ephemeral).forEach(post => { savedDrafts[post.id] = post.draft; });
+    posts.filter(post => post.loaded && !post.ephemeral && post.kind !== 'pdf').forEach(post => { savedDrafts[post.id] = post.draft; });
     localStorage.setItem(storageKey, JSON.stringify({ drafts: savedDrafts, theme: document.body.classList.contains('dark') ? 'dark' : 'light', codeColors: !document.body.classList.contains('code-monochrome') }));
     storageAvailable = true;
     return true;
@@ -101,7 +93,7 @@ function allFoldersExpanded() {
 }
 function renderClasses() {
   const open = new Set(Array.from($('#class-tree').querySelectorAll('details[open]'), node => node.dataset.course));
-  $('#class-tree').innerHTML = courses.map(([key, title]) => '<details class="course-folder" data-course="' + key + '"' + (open.has(key) ? ' open' : '') + '><summary title="' + escapeHtml(title) + '">' + escapeHtml(title) + '</summary><div class="folder-children">' + posts.filter(post => post.courseId === key).map(postButton).join('') + '</div></details>').join('');
+  $('#class-tree').innerHTML = courses.map(({ id: key, title }) => '<details class="course-folder" data-course="' + key + '"' + (open.has(key) ? ' open' : '') + '><summary title="' + escapeHtml(title) + '">' + escapeHtml(title) + '</summary><div class="folder-children">' + posts.filter(post => post.courseId === key).map(postButton).join('') + '</div></details>').join('');
 }
 function renderTree() {
   renderClasses();
@@ -164,6 +156,21 @@ async function initializeContent() {
 }
 function renderArticle() {
   const post = current();
+  const pdf = post.kind === 'pdf';
+  $('#pdf-layout').hidden = !pdf;
+  const frame = $('#course-pdf');
+  if (pdf) {
+    $('#reading-layout').hidden = true;
+    $('#article').replaceChildren();
+    $('#outline').replaceChildren();
+    frame.title = post.course + ' · ' + post.title + ' PDF';
+    frame.hidden = !post.pdfUrl;
+    $('#pdf-error').hidden = Boolean(post.pdfUrl);
+    if (post.pdfUrl && (frame.dataset.post !== post.id || frame.getAttribute('src') !== post.pdfUrl)) { frame.src = post.pdfUrl; frame.dataset.post = post.id; }
+    else if (!post.pdfUrl) frame.removeAttribute('src');
+    return;
+  }
+  frame.removeAttribute('src');
   const source = post.published;
   $('#article').classList.toggle('introduction-page', selected === introId);
   if (!source) {
@@ -198,8 +205,11 @@ function renderPreview() {
 }
 function setMode(nextMode, stash = true) {
   if (mode === 'edit' && stash) { current().draft = $('#source').value; clearTimeout(renderTimer); }
-  mode = nextMode;
-  $('#reading-layout').hidden = mode !== 'read';
+  const pdf = current().kind === 'pdf';
+  mode = pdf ? 'read' : nextMode;
+  $('#mode-toggle').hidden = pdf;
+  $('#pdf-layout').hidden = !pdf;
+  $('#reading-layout').hidden = pdf || mode !== 'read';
   $('#editor-layout').hidden = mode !== 'edit';
   const modeLabel = mode === 'edit' ? 'Switch to read mode' : 'Switch to edit mode';
   $('#mode-toggle').setAttribute('aria-label', modeLabel);
@@ -356,7 +366,7 @@ resizer.addEventListener('keydown', (event) => { if (['ArrowLeft', 'ArrowRight']
 
 function panelBounds(key) {
   const width = $('.workspace').clientWidth;
-  const otherWidth = key === 'sidebar' ? (width > 1000 && mode === 'read' && !outlineHidden ? panelWidths.outline + 6 : 0) : panelWidths.sidebar + 6;
+  const otherWidth = key === 'sidebar' ? (width > 1000 && mode === 'read' && current().kind !== 'pdf' && !outlineHidden ? panelWidths.outline + 6 : 0) : panelWidths.sidebar + 6;
   const min = key === 'sidebar' ? 220 : 160;
   const max = Math.max(min, Math.min(key === 'sidebar' ? 560 : 420, width - otherWidth - 366));
   return { min, max };
@@ -364,7 +374,7 @@ function panelBounds(key) {
 function updateOutline() {
   $('#reading-layout').classList.toggle('outline-hidden', outlineHidden);
   const toggle = $('#outline-toggle');
-  toggle.hidden = mode === 'edit';
+  toggle.hidden = mode === 'edit' || current().kind === 'pdf';
   toggle.setAttribute('aria-expanded', String(!outlineHidden));
   toggle.setAttribute('aria-pressed', String(!outlineHidden));
   const label = outlineHidden ? 'Show table of contents' : 'Hide table of contents';

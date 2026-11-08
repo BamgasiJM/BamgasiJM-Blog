@@ -14,6 +14,8 @@ const routes = new Map([
   ['/highlight.js', ['highlight.js', 'text/javascript; charset=utf-8']],
   ['/library.js', ['library.js', 'text/javascript; charset=utf-8']],
   ['/scroll-sync.js', ['scroll-sync.js', 'text/javascript; charset=utf-8']],
+  ['/courses.js', ['courses.js', 'text/javascript; charset=utf-8']],
+  ['/course-library.js', ['course-library.js', 'text/javascript; charset=utf-8']],
   ['/introduction.md', ['introduction.md', 'text/markdown; charset=utf-8']],
 ]);
 
@@ -26,7 +28,8 @@ export function createPreviewServer({ contentDirectory, library = { list: () => 
     if (!['GET', 'HEAD'].includes(request.method)) { response.writeHead(405, { Allow: 'GET, HEAD' }); response.end(); return; }
     try {
       const url = new URL(request.url, 'http://127.0.0.1');
-      if (url.pathname === '/favicon.ico') { response.writeHead(204); response.end(); return; }
+      const icon = url.pathname === '/favicon.ico' ? 'favicon.ico' : url.pathname.match(/^\/img\/(favicon\.ico|favicon-16x16\.png|favicon-32x32\.png|apple-touch-icon\.png)$/)?.[1];
+      if (icon) { send(200, icon.endsWith('.ico') ? 'image/x-icon' : 'image/png', await readFile(new URL(`../img/${icon}`, import.meta.url))); return; }
       if (url.pathname === '/api/content') { send(200, 'application/json; charset=utf-8', JSON.stringify(await library.list())); return; }
       if (url.pathname === '/api/post') { send(200, 'text/markdown; charset=utf-8', await library.read(url.searchParams.get('path'))); return; }
       const katexAsset = url.pathname.match(/^\/node_modules\/katex\/dist\/(katex\.mjs|katex\.min\.css|fonts\/KaTeX_[A-Za-z0-9_-]+\.(?:woff2?|ttf))$/)?.[1];
@@ -37,7 +40,7 @@ export function createPreviewServer({ contentDirectory, library = { list: () => 
       }
       const route = routes.get(url.pathname);
       if (!route) { send(404, 'text/plain; charset=utf-8', 'Not found'); return; }
-      send(200, route[1], await readFile(new URL(`../prototype/${route[0]}`, import.meta.url)));
+      send(200, route[1], await readFile(new URL(`../web/${route[0]}`, import.meta.url)));
     } catch (error) {
       const status = error.status || (error.code === 'ENOENT' ? 404 : 500);
       send(status, 'application/json; charset=utf-8', JSON.stringify({ error: error.publicMessage || (status === 404 ? '파일 또는 콘텐츠 폴더를 찾을 수 없습니다.' : status < 500 ? '허용되지 않은 파일 경로입니다.' : '파일을 읽지 못했습니다.') }));

@@ -6,6 +6,10 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="color-scheme" content="light dark">
   <title>BamgasiJM BLOG</title>
+  <link rel="icon" href="/img/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&amp;family=Nanum+Gothic+Coding&amp;family=Noto+Sans:wght@100..900&amp;family=Noto+Sans+KR:wght@100..900&amp;display=swap" rel="stylesheet">
@@ -27,6 +31,7 @@
       <nav id="tree" class="tree" aria-label="Generative Art 폴더와 글"></nav>
       </div></section>
       <section class="class-section" aria-labelledby="class-section-title"><div class="sidebar-section-header"><h2 class="sidebar-section-title" id="class-section-title">Class 수업자료</h2><button id="class-section-toggle" class="icon-button section-toggle" aria-controls="class-section-body" aria-expanded="true" aria-label="Collapse Class materials" title="Collapse Class materials"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div><div class="section-body" id="class-section-body"><nav id="class-tree" class="class-tree" aria-label="수업과 주차별 자료"></nav></div></section>
+      <footer class="sidebar-footer"><small>ⓒ 2026 JaiKim. All rights reserved</small></footer>
     </aside>
     <div id="sidebar-resizer" class="panel-resizer" role="separator" aria-label="글 목록 너비 조절" aria-controls="sidebar" aria-orientation="vertical" aria-valuemin="220" aria-valuemax="560" aria-valuenow="288" tabindex="0"></div>
     <div class="scrim" id="scrim" hidden></div>
@@ -36,6 +41,10 @@
         <div class="article-scroll" id="article-scroll"><article id="article" class="article" tabindex="-1"></article></div>
         <div id="outline-resizer" class="panel-resizer" role="separator" aria-label="목차 너비 조절" aria-controls="outline-panel" aria-orientation="vertical" aria-valuemin="160" aria-valuemax="420" aria-valuenow="216" tabindex="0"></div>
         <aside class="outline" id="outline-panel" aria-label="이 글의 목차"><h2 class="outline-title">목차</h2><nav id="outline"></nav></aside>
+      </section>
+      <section class="pdf-layout" id="pdf-layout" hidden aria-label="수업 PDF 자료">
+        <iframe id="course-pdf" title="수업 PDF 자료" allow="fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        <p id="pdf-error" class="empty-state" role="status" hidden>PDF 주소를 확인해주세요.</p>
       </section>
       <section class="editor-layout" id="editor-layout" hidden aria-label="글 편집">
         <div class="editor-actions"><div class="editor-tabs" role="group" aria-label="모바일 편집 보기"><button id="tab-edit" aria-pressed="true">에디터</button><button id="tab-preview" aria-pressed="false">프리뷰</button></div><div class="format-toolbar" aria-label="본문 도구"><button data-insert="heading" title="제목 삽입">H₂</button><button data-insert="bold" title="굵은 글씨 삽입"><b>B</b></button><button data-insert="code" title="코드 삽입">&lt;/&gt;</button><button data-insert="math" title="수식 삽입">∑</button><button id="open-media">▧ <span>Drive 미디어</span></button></div><label class="sync-label"><input id="sync-toggle" type="checkbox" checked> 스크롤 동기화</label></div>

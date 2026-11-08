@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { inline, parseMarkdown } from '../prototype/markdown.js';
-import { highlightCode } from '../prototype/highlight.js';
+import { inline, parseMarkdown } from '../web/markdown.js';
+import { highlightCode } from '../web/highlight.js';
 
 const imageUrl = 'https://velog.velcdn.com/images/ryoong1125/post/4d7d749d-b56f-4893-9efc-6e244842b064/image.jpg';
 const render = (source) => parseMarkdown(source).map((block) => block.html).join('');

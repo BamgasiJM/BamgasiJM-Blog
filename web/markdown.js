@@ -1,5 +1,5 @@
-// Shared by the reading view and editor preview. A local prototype
-// renderer; the production application will use the remark/rehype pipeline.
+// Shared by the reading view and editor preview. The shared Markdown
+// renderer with KaTeX and code highlighting.
 import { highlightCode } from './highlight.js';
 import katex from '../node_modules/katex/dist/katex.mjs';
 export const escapeHtml = (text) => String(text).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);

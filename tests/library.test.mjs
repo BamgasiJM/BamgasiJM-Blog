@@ -6,7 +6,7 @@ import path from 'node:path';
 import { once } from 'node:events';
 import { listMarkdown, readMarkdown } from '../tools/content-library.mjs';
 import { createPreviewServer } from '../tools/preview-server.mjs';
-import { buildTree, filterTree } from '../prototype/library.js';
+import { buildTree, filterTree } from '../web/library.js';
 
 test('content API discovers Unicode folders and reads only Markdown inside the configured root', async t => {
   const directory = await mkdtemp(path.join(tmpdir(), 'bamgasi-content-'));
@@ -34,7 +34,13 @@ test('content API discovers Unicode folders and reads only Markdown inside the c
   const listed = await (await fetch(origin + '/api/content')).json();
   assert.equal(listed.length, 3);
   assert.equal(await (await fetch(origin + '/api/post?path=' + encodeURIComponent(nested.path))).text(), '# 원문\n\n본문');
-  for (const file of ['highlight.js', 'library.js', 'scroll-sync.js', 'introduction.md']) assert.equal((await fetch(origin + '/' + file)).status, 200);
+  for (const file of ['highlight.js', 'library.js', 'scroll-sync.js', 'introduction.md', 'courses.js', 'course-library.js']) assert.equal((await fetch(origin + '/' + file)).status, 200);
+  for (const asset of ['/favicon.ico', '/img/favicon.ico', '/img/favicon-32x32.png', '/img/favicon-16x16.png', '/img/apple-touch-icon.png']) {
+    const response = await fetch(origin + asset);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), asset.endsWith('.ico') ? 'image/x-icon' : 'image/png');
+    assert.ok((await response.arrayBuffer()).byteLength > 0);
+  }
   for (const [asset, mime] of [['katex.mjs', 'text/javascript'], ['katex.min.css', 'text/css'], ['fonts/KaTeX_Main-Regular.woff2', 'font/woff2']]) {
     const response = await fetch(origin + '/node_modules/katex/dist/' + asset);
     assert.equal(response.status, 200);
