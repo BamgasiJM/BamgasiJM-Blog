@@ -1,6 +1,6 @@
-![](https://velog.velcdn.com/images/ryoong1125/post/b3d8422a-f52e-4233-85ba-a91c657dd225/image.png)
-
 # BamgasiJM
+
+![](https://velog.velcdn.com/images/ryoong1125/post/2a975a63-294f-4473-8ee1-9cf519ff8ce3/image.jpg)
 
 ## About
 

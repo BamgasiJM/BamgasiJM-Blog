@@ -25,6 +25,11 @@ document.addEventListener('click', async event => {
   } catch { toast('코드를 복사하지 못했습니다. 브라우저의 클립보드 권한을 확인해주세요.'); }
 });
 const storageKey = 'gyeol-design-preview-v1';
+const themePresets = {
+  dark: [['default', 'Graphite'], ['charcoal', 'Catppuccin Mocha'], ['black', 'Gruvbox Dark'], ['night-owl', 'Night Owl'], ['monokai', 'Monokai'], ['deep-dark-space', 'Deep Dark Space']],
+  light: [['default', 'White'], ['paper', 'Catppuccin Latte'], ['silver', 'Gruvbox Light'], ['newsprint', 'Newsprint']],
+};
+const themeChoices = { dark: 'default', light: 'default' };
 const staticContent = document.body.dataset.content === 'static';
 if (staticContent) {
   $('#publish').textContent = 'Apply preview';
@@ -71,6 +76,9 @@ try {
   for (const post of posts) if (post.kind !== 'pdf' && typeof savedDrafts[post.id] === 'string') post.draft = savedDrafts[post.id];
   if (saved?.codeColors === false) document.body.classList.add('code-monochrome');
   document.body.classList.toggle('dark', saved?.theme !== 'light');
+  for (const mode of ['dark', 'light']) {
+    if (themePresets[mode].some(([id]) => id === saved?.themeChoices?.[mode])) themeChoices[mode] = saved.themeChoices[mode];
+  }
 } catch { storageAvailable = false; }
 try {
   const savedLayout = JSON.parse(localStorage.getItem(layoutStorageKey) || 'null');
@@ -88,7 +96,7 @@ function toast(message) {
 function persist() {
   try {
     posts.filter(post => post.loaded && !post.ephemeral && post.kind !== 'pdf').forEach(post => { savedDrafts[post.id] = post.draft; });
-    localStorage.setItem(storageKey, JSON.stringify({ drafts: savedDrafts, theme: document.body.classList.contains('dark') ? 'dark' : 'light', codeColors: !document.body.classList.contains('code-monochrome') }));
+    localStorage.setItem(storageKey, JSON.stringify({ drafts: savedDrafts, theme: document.body.classList.contains('dark') ? 'dark' : 'light', themeChoices, codeColors: !document.body.classList.contains('code-monochrome') }));
     storageAvailable = true;
     return true;
   } catch { storageAvailable = false; toast('브라우저 저장 공간에 접근할 수 없습니다. 작성 내용을 따로 복사해주세요.'); return false; }
@@ -344,7 +352,42 @@ $('#new-note').addEventListener('click', () => {
   query = ''; $('#tree-search').value = ''; selectPost(id).then(() => setMode('edit', false));
   toast('체험용 초안을 만들었습니다. 새 글은 새로고침하면 초기화됩니다.');
 });
-$('#theme-toggle').addEventListener('click', () => { document.body.classList.toggle('dark'); updateThemeLabel(); persist(); });
+const presetButton = document.createElement('button');
+presetButton.id = 'theme-presets-toggle';
+presetButton.className = 'icon-button';
+presetButton.setAttribute('aria-label', 'Choose theme');
+presetButton.title = 'Choose theme';
+presetButton.setAttribute('popovertarget', 'theme-presets');
+presetButton.setAttribute('aria-controls', 'theme-presets');
+presetButton.setAttribute('aria-expanded', 'false');
+presetButton.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="7" cy="17" r="3"/><circle cx="17" cy="17" r="3"/></svg>';
+$('#theme-toggle').after(presetButton);
+const presetPanel = document.createElement('div');
+presetPanel.id = 'theme-presets';
+presetPanel.setAttribute('popover', 'auto');
+presetPanel.setAttribute('role', 'group');
+presetPanel.setAttribute('aria-label', 'Theme presets');
+document.body.append(presetPanel);
+function applyThemePreset() {
+  const mode = document.body.classList.contains('dark') ? 'dark' : 'light';
+  document.body.dataset.themePreset = themeChoices[mode];
+  presetPanel.innerHTML = themePresets[mode].map(([id, label]) => `<button type="button" data-preset="${id}" aria-pressed="${themeChoices[mode] === id}"><span class="theme-swatch" data-mode="${mode}" data-swatch="${id}" aria-hidden="true"></span>${label}</button>`).join('');
+}
+presetPanel.addEventListener('toggle', event => {
+  const open = event.newState === 'open';
+  presetButton.setAttribute('aria-expanded', String(open));
+  presetButton.setAttribute('aria-pressed', String(open));
+});
+presetPanel.addEventListener('click', event => {
+  const option = event.target.closest('[data-preset]');
+  if (!option) return;
+  const mode = document.body.classList.contains('dark') ? 'dark' : 'light';
+  themeChoices[mode] = option.dataset.preset;
+  applyThemePreset(); persist();
+  presetPanel.hidePopover(); presetButton.focus();
+});
+applyThemePreset();
+$('#theme-toggle').addEventListener('click', () => { document.body.classList.toggle('dark'); updateThemeLabel(); applyThemePreset(); persist(); });
 $('#code-toggle').addEventListener('click', () => { document.body.classList.toggle('code-monochrome'); updateCodeLabel(); persist(); });
 function updateCodeLabel() {
   const enabled = !document.body.classList.contains('code-monochrome');

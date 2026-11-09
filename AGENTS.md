@@ -145,6 +145,12 @@
 
 ## 디자인과 접근성
 
+- 라이트 테마 Newsprint는 신문지 느낌의 회색 바탕·먹색 강조·낮은 채도의 코드 색상을 사용한다.
+
+- 추가 다크 테마 Night Owl·Monokai·Deep Dark Space는 VS Code 테마의 분위기를 참고한 색상 구성으로 제공한다. 정확한 원본 테마 포팅으로 설명하지 않는다. 테마 목록은 작은 화면에서도 내부 스크롤로 모든 항목을 선택할 수 있어야 한다.
+
+- 다크/라이트 버튼 옆 테마 아이콘에서 현재 모드의 프리셋을 선택한다. 기본 Graphite·White는 기존 무채색·민트를 유지한다. 선택 테마는 Catppuccin Mocha·Latte와 Gruvbox Dark·Light 팔레트를 참고해 배경·강조·코드 색상을 적용한다. 사용자 선택 컬러 테마에는 무채색·민트 제한의 예외를 적용한다. 모드별 선택을 별도로 브라우저에 저장한다. 선택 패널은 바깥 클릭·Escape로 닫히고 키보드로 선택할 수 있어야 한다.
+
 - 읽기 중심의 단일 본문 열, 절제된 카드·구분선, 명확한 제목 계층과 넉넉한 여백을 사용한다. 장식용 대시보드, 과한 그라데이션·애니메이션은 피한다.
 - 본문 폭은 약 720–800 px, 본문 글자는 16–18 px 범위에서 시작한다. 한국어 줄바꿈과 코드 혼용 가독성을 확인한다.
 - 본문·UI의 영문은 Google Fonts의 Noto Sans, 한글은 Noto Sans KR을 사용한다. 코드·인라인 코드·Markdown 편집기와 스크롤 위치 계산용 mirror는 JetBrains Mono를 우선 사용하고 한글 글리프는 Nanum Gothic Coding으로 표시한다. fonts.googleapis.com과 fonts.gstatic.com에 preconnect하고 display=swap으로 불러온다. 폰트 로드 후 편집기 위치 계산도 갱신한다.
