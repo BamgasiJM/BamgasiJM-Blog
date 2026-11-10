@@ -1,3 +1,12 @@
+export function adjacentPosts(posts, id) {
+  const current = posts.find(post => post.id === id);
+  if (!current) return { previous: null, next: null };
+  const folder = post => (post.path || post.id).split('/').slice(0, -1).join('/');
+  const siblings = posts.filter(post => folder(post) === folder(current));
+  const index = siblings.findIndex(post => post.id === id);
+  return { previous: siblings[index - 1] || null, next: siblings[index + 1] || null };
+}
+
 export function buildTree(posts) {
   const root = { id: '', title: '', children: [], posts: [] };
   const folders = new Map([['', root]]);

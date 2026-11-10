@@ -6,7 +6,15 @@ import path from 'node:path';
 import { once } from 'node:events';
 import { listMarkdown, readMarkdown, readCover } from '../tools/content-library.mjs';
 import { createPreviewServer } from '../tools/preview-server.mjs';
-import { buildTree, filterTree } from '../web/library.js';
+import { buildTree, filterTree, adjacentPosts } from '../web/library.js';
+
+test('previous and next posts follow sibling order without crossing folders', () => {
+  const posts = ['root.md', 'A/one.md', 'B/other.md', 'A/two.md', 'A/child/nested.md', 'A/three.md'].map(id => ({ id, path: id }));
+  assert.deepEqual(adjacentPosts(posts, 'A/two.md'), { previous: posts[1], next: posts[5] });
+  assert.equal(adjacentPosts(posts, 'A/one.md').previous, null);
+  assert.equal(adjacentPosts(posts, 'A/three.md').next, null);
+  for (const id of ['root.md', 'B/other.md', 'A/child/nested.md', 'missing']) assert.deepEqual(adjacentPosts(posts, id), { previous: null, next: null });
+});
 
 test('folder covers inherit, override, reject ambiguous images and serve safely', async t => {
   const root = await mkdtemp(path.join(tmpdir(), 'bamgasi-covers-'));

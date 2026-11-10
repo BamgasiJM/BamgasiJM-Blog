@@ -1,6 +1,6 @@
 /* Static blog UI shared by local development and Cloudflare Pages. */
 import { escapeHtml, parseMarkdown } from './markdown.js';
-import { buildTree, filterTree } from './library.js';
+import { buildTree, filterTree, adjacentPosts } from './library.js';
 import { createEditorScrollSync } from './scroll-sync.js';
 import { courses } from './courses.js';
 import { coursePosts } from './course-library.js';
@@ -182,6 +182,26 @@ async function initializeContent() {
   }).catch(() => toast('소개 파일을 읽지 못했습니다. 서버를 다시 실행해주세요.'));
   await Promise.allSettled([introductionTask, loadLibrary()]);
 }
+// Query URLs work on static hosting without per-post rewrite rules.
+function postFromLocation() {
+  return new URL(location.href).searchParams.get('post') || introId;
+}
+function recordPost(id, replace = false) {
+  const url = new URL(location.href);
+  if (id === introId) url.searchParams.delete('post');
+  else url.searchParams.set('post', id);
+  url.hash = '';
+  if (replace) history.replaceState({ post: id }, '', url);
+  else if (url.href !== location.href) history.pushState({ post: id }, '', url);
+}
+async function restorePostFromLocation() {
+  const id = postFromLocation();
+  if (!posts.some(post => post.id === id)) {
+    toast('요청한 글을 찾을 수 없습니다. 글 목록과 주소를 확인해주세요.');
+    return;
+  }
+  await selectPost(id, { record: false });
+}
 function renderArticle() {
   const post = current();
   const pdf = post.kind === 'pdf';
@@ -210,6 +230,7 @@ function renderArticle() {
     $('#article').innerHTML = `<h1>${escapeHtml(post.title)}</h1><button class="button" id="edit-empty">초안 편집</button>`;
     $('#edit-empty').addEventListener('click', () => setMode('edit'));
     $('#outline').innerHTML = '';
+    renderPostNavigation(post);
     return;
   }
   const articleBlocks = parse(source);
@@ -224,6 +245,27 @@ function renderArticle() {
     cover.addEventListener('error', () => cover.remove(), { once: true });
     $('#article').prepend(cover);
   }
+  renderPostNavigation(post);
+}
+function renderPostNavigation(post) {
+  if (post.id === introId || post.section === 'class' || post.ephemeral) return;
+  const { previous, next } = adjacentPosts(blogPosts().filter(item => !item.ephemeral), post.id);
+  const nav = document.createElement('nav');
+  nav.className = 'post-navigation';
+  nav.setAttribute('aria-label', '이전 글과 다음 글');
+  for (const [direction, target] of [['previous', previous], ['next', next]]) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `post-navigation-button ${direction}`;
+    const label = direction === 'previous' ? 'Previous post' : 'Next post';
+    button.setAttribute('aria-label', target ? `${label}: ${target.title}` : label);
+    button.title = target ? `${label}: ${target.title}` : label;
+    button.disabled = !target;
+    button.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="${direction === 'previous' ? 'M17 4 5 12l12 8Z' : 'm7 4 12 8-12 8Z'}"/></svg>`;
+    if (target) button.addEventListener('click', () => selectPost(target.id));
+    nav.append(button);
+  }
+  $('#article').append(nav);
 }
 function renderPreview() {
   editorScroll.updatePreview(() => {
@@ -264,7 +306,7 @@ function setMode(nextMode, stash = true) {
     requestAnimationFrame(renderPreview);
   } else renderArticle();
 }
-async function selectPost(id) {
+async function selectPost(id, { record = true } = {}) {
   const next = posts.find(post => post.id === id);
   if (!next) return;
   const version = ++selectionVersion;
@@ -280,6 +322,8 @@ async function selectPost(id) {
     }
     if (version !== selectionVersion) return;
     selected = id;
+    if (record && !next.ephemeral) recordPost(id);
+    document.title = id === introId ? 'BamgasiJM BLOG' : `${next.title} · BamgasiJM BLOG`;
     compactOutlineOpen = false;
     const parts = (next.path || id).split('/');
     for (let index = 1; index < parts.length; index++) collapsed.delete(parts.slice(0, index).join('/'));
@@ -598,6 +642,16 @@ window.addEventListener('beforeunload', (event) => { if (dirty) { event.preventD
 renderClasses(true);
 renderTree(); renderArticle(); updateThemeLabel(); updateCodeLabel(); updateOutline(); updateSections();
 applyPanelWidths();
-initializeContent();
+const contentReady = initializeContent();
+contentReady.then(async () => {
+  history.replaceState({ post: postFromLocation() }, '', location.href);
+  await restorePostFromLocation();
+});
+window.addEventListener('popstate', async () => {
+  // Invalidate an in-flight selection immediately, even during initial loading.
+  selectionVersion++;
+  await contentReady;
+  await restorePostFromLocation();
+});
 closeSidebar();
 if (!storageAvailable) toast('브라우저 저장 공간을 사용할 수 없어 새로고침하면 변경 사항이 사라질 수 있습니다.');

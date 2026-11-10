@@ -123,6 +123,10 @@ button:disabled { opacity: .4; cursor: default; }
 .article-scroll { flex: 1; min-width: 0; overflow: auto; scroll-behavior: smooth; }
 .article { width: 100%; max-width: 1100px; padding: 65px 28px 100px; margin: auto; }
 .article-cover { display: block; width: 100%; height: auto; margin: 0 0 32px; }
+.post-navigation { display: flex; justify-content: space-between; margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); }
+.post-navigation-button { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 4px; color: var(--muted); }
+.post-navigation-button:not(:disabled):hover { color: var(--accent); background: var(--accent-soft); }
+.post-navigation-button:disabled { cursor: default; opacity: .25; }
 .article h1 { font-size: clamp(29px, 2.7vw, 40px); letter-spacing: -1.5px; line-height: 1.4; margin: 0 0 46px; font-weight: 730; word-break: keep-all; }
 .prose { font-size: 17px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
 .prose h2 { font-size: 25px; letter-spacing: -.7px; line-height: 1.5; margin: 38px 0 18px; font-weight: 680; scroll-margin-top: 25px; }
