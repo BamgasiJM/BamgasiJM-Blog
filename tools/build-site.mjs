@@ -42,7 +42,7 @@ export async function buildSite({ contentDirectory, workspace = projectRoot } = 
     await mkdir(path.join(stage, 'content', 'posts'), { recursive: true });
     for (const asset of assets) await cp(path.join(projectRoot, 'web', asset), path.join(stage, asset));
     await mkdir(path.join(stage, 'img'));
-    for (const icon of ['favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png']) {
+    for (const icon of ['favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png', 'vpa.png', 'algorithm_coding.svg']) {
       await cp(path.join(projectRoot, 'img', icon), path.join(stage, 'img', icon));
     }
     await cp(path.join(projectRoot, 'img', 'favicon.ico'), path.join(stage, 'favicon.ico'));

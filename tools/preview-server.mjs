@@ -28,8 +28,8 @@ export function createPreviewServer({ contentDirectory, library = { list: () => 
     if (!['GET', 'HEAD'].includes(request.method)) { response.writeHead(405, { Allow: 'GET, HEAD' }); response.end(); return; }
     try {
       const url = new URL(request.url, 'http://127.0.0.1');
-      const icon = url.pathname === '/favicon.ico' ? 'favicon.ico' : url.pathname.match(/^\/img\/(favicon\.ico|favicon-16x16\.png|favicon-32x32\.png|apple-touch-icon\.png)$/)?.[1];
-      if (icon) { send(200, icon.endsWith('.ico') ? 'image/x-icon' : 'image/png', await readFile(new URL(`../img/${icon}`, import.meta.url))); return; }
+      const icon = url.pathname === '/favicon.ico' ? 'favicon.ico' : url.pathname.match(/^\/img\/(favicon\.ico|favicon-16x16\.png|favicon-32x32\.png|apple-touch-icon\.png|vpa\.png|algorithm_coding\.svg)$/)?.[1];
+      if (icon) { send(200, icon.endsWith('.svg') ? 'image/svg+xml' : icon.endsWith('.ico') ? 'image/x-icon' : 'image/png', await readFile(new URL(`../img/${icon}`, import.meta.url))); return; }
       if (url.pathname === '/api/content') { send(200, 'application/json; charset=utf-8', JSON.stringify(await library.list())); return; }
       if (url.pathname === '/api/post') { send(200, 'text/markdown; charset=utf-8', await library.read(url.searchParams.get('path'))); return; }
       if (url.pathname === '/api/cover') { send(200, 'image/jpeg', await readCover(contentDirectory, url.searchParams.get('path'))); return; }

@@ -4,29 +4,29 @@
 
 ## About
 
-오랫동안 그래픽 소프트웨어를 사용하면서 컨텐츠를 만들어왔습니다.
+알고리즘을 구현하고 시각적으로 표현하는 것을 공부하는데 참고하는 이론과 코드의 모음집입니다.
 
-문득 모니터에 점 하나가 찍히는 원리가 궁금해져 넓고 깊은 그래픽 프로그래밍의 바다에 발을 적셨습니다.
+다양한 그래픽 소프트웨어와 프로그래밍 언어를 사용해 아트워크를 구성하는 방법과 실험 과정을 담고 있습니다.
 
-코드로 형태와 움직임을 만들고, 새로운 시각적 표현을 가능하게 해주는 Creative Coding과 Generative Art를 탐구합니다. 
-
-다양한 수학 알고리즘으로 시각 결과물을 만드는 데에 기쁨을 느낍니다.
-
-현재 세명대학교에서 학생들을 가르치면서 AI의 도움으로 공부하고 글도 쓰고 있습니다.
+글과 코드의 대부분은 AI를 통해 작성되었습니다.
 
 ---
 
 ## Graphic Softwares
 
-Photoshop · Illustrator · After Effects · Cavarly · TouchDesigner
+그래픽 소프트웨어를 사용해서 컨텐츠를 만들고 시각 표현을 탐구합니다.
 
-Blender ·  Rhino · Houdini · Unity · Unreal · Godot
+- Photoshop · Illustrator · After Effects · Cavarly
 
-Cables · Spline · Graphite
+- Blender ·  Rhino · Houdini · Unity · Unreal · Godot
+
+- TouchDesigner · Cables · Spline · Graphite
 
 ---
 
 ## Libraries & Frameworks
+
+코드로 형태와 움직임을 만들고, 새로운 시각적 표현을 가능하게 해주는 Creative Coding과 Generative Art를 공부합니다.
 
 OpenGL · WebGL· GLSL
 
@@ -37,6 +37,8 @@ OPENRNDR · nannou · bevy · rayLib · openFrameworks · Processing
 ---
 
 ## Interests
+
+수학 알고리즘을 활용해 아래의 시각 실험을 하고 있습니다.
 
 - WebGL과 OpenGL에서 GLSL을 활용한 Shader Art 실험
 - 웹 & 네이티브 환경에서 알고리즘 아트 구현

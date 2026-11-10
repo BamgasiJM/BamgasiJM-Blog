@@ -18,7 +18,7 @@ export function createStaticServer(directory) {
       const target = await realpath(path.resolve(root, '.' + (pathname === '/' ? '/index.html' : pathname)));
       const relative = path.relative(root, target);
       if (!relative || relative.startsWith('..' + path.sep) || relative === '..' || path.isAbsolute(relative)) throw new Error('Outside dist');
-      const type = /\.jpe?g$/i.test(target) ? 'image/jpeg' : types[path.extname(target)];
+      const type = /\.jpe?g$/i.test(target) ? 'image/jpeg' : path.extname(target) === '.svg' ? 'image/svg+xml' : types[path.extname(target)];
       if (!type) throw new Error('Unsupported asset');
       const body = await readFile(target);
       response.writeHead(200, { 'Content-Type': type, 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'no-store' });
