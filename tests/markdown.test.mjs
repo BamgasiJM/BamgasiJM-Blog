@@ -100,6 +100,16 @@ test('unsafe image and link protocols do not produce active elements', () => {
   assert.ok(inline('[문서](https://example.com/docs)').includes('<a href="https://example.com/docs"'));
 });
 
+test('Image Baker raster data URLs render as images but never as links or executable HTML', () => {
+  const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a9e0AAAAASUVORK5CYII=';
+  assert.ok(render(`![embedded](${png})`).includes(`<img src="${png}"`));
+  assert.ok(!inline(`[link](${png})`).includes('<a '));
+  assert.ok(inline('`![](' + png + ')`').startsWith('<code>'));
+  assert.ok(!render('```md\n![](' + png + ')\n```').includes('<img'));
+  for (const mime of ['jpeg', 'jpg', 'gif', 'webp']) assert.ok(inline(`![](data:image/${mime};base64,AAAA)`).includes('<img'));
+  for (const url of ['data:image/svg+xml;base64,AAAA', 'data:text/html;base64,AAAA', 'data:image/png;base64,AA=A', 'data:image/png;base64,A!AA', 'data:image/png;base64,', 'data:image/png;base64,AAAA"onerror="x', 'data:image/png;base64,' + 'A'.repeat(4 * Math.ceil((5 * 1024 * 1024 + 1) / 3))]) assert.ok(!inline(`![](${url})`).includes('<img'));
+});
+
 test('a Markdown table renders a header, body and column alignment', () => {
   const html = render('| 항목 | 값 | 설명 |\n| :--- | ---: | :---: |\n| 반지름 | 10 | **강조** |\n| 높이 | 20 | `코드` |');
   assert.ok(html.includes('<table><thead>'));

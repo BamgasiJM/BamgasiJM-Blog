@@ -58,7 +58,7 @@ export async function buildSite({ contentDirectory, workspace = projectRoot } = 
       if (!result.published) { excluded++; continue; }
       const filename = createHash('sha256').update(entry.id).digest('hex') + '.md';
       const bytes = Buffer.byteLength(result.source);
-      if (bytes > 2 * 1024 * 1024) throw new Error(`Markdown exceeds 2MB: ${entry.path}`);
+      if (bytes > 20 * 1024 * 1024) throw new Error(`Markdown exceeds 20MB (including embedded images): ${entry.path}`);
       const contentUrl = '/content/posts/' + filename;
       await writeFile(path.join(stage, contentUrl.slice(1)), result.source);
       const { coverPath, coverUrl: localCoverUrl, ...metadata } = entry;

@@ -21,6 +21,17 @@ function closingDollar(text, start, delimiter) {
 }
 
 function safeUrl(value, image = false) {
+  if (image && /^data:/i.test(value)) {
+    // Raster image data is inert inside <img>; never allow SVG/HTML data URLs.
+    const header = value.match(/^data:image\/(png|jpe?g|gif|webp);base64,/i);
+    if (!header || value.length > 7 * 1024 * 1024) return null;
+    const payload = value.slice(header[0].length);
+    if (!payload || payload.length % 4 !== 0 || /[^A-Za-z0-9+/=]/.test(payload)) return null;
+    const padding = payload.endsWith('==') ? 2 : payload.endsWith('=') ? 1 : 0;
+    if (payload.slice(0, payload.length - padding).includes('=')) return null;
+    if (payload.length / 4 * 3 - padding > 5 * 1024 * 1024) return null;
+    return value;
+  }
   if (/[\u0000-\u0020\u007f]/.test(value)) return null;
   try {
     const url = new URL(value);

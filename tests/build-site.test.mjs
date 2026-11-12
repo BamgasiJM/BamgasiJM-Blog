@@ -62,8 +62,8 @@ test('rebuild removes deleted posts and leaves previous deployment intact after 
   await buildSite({ workspace, contentDirectory: source });
   const posts = path.join(workspace, 'dist', 'content', 'posts');
   assert.equal((await readdir(posts)).length, 1);
-  await writeFile(path.join(source, 'one.md'), 'x'.repeat(2 * 1024 * 1024 + 1));
-  await assert.rejects(buildSite({ workspace, contentDirectory: source }), /exceeds 2MB/);
+  await writeFile(path.join(source, 'one.md'), 'x'.repeat(20 * 1024 * 1024 + 1));
+  await assert.rejects(buildSite({ workspace, contentDirectory: source }), /exceeds 20MB/);
   assert.equal((await readdir(posts)).length, 1);
   await assert.rejects(buildSite({ workspace, contentDirectory: path.join(workspace, 'dist') }), /must not contain/);
   assert.ok(!(await readdir(workspace)).some(name => name.startsWith('.site-')));
