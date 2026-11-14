@@ -50,6 +50,7 @@ let selected = introId;
 let selectionVersion = 0;
 let query = '';
 let savedDrafts = {};
+let savedDraftBases = {};
 const layoutStorageKey = 'bamgasijm-panel-widths-v1';
 let panelWidths = { sidebar: 288, outline: 216 };
 let mode = 'read';
@@ -73,7 +74,8 @@ const editorScroll = createEditorScrollSync({
 try {
   const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
   if (saved?.drafts) savedDrafts = saved.drafts;
-  for (const post of posts) if (post.kind !== 'pdf' && typeof savedDrafts[post.id] === 'string') post.draft = savedDrafts[post.id];
+  if (saved?.draftBases) savedDraftBases = saved.draftBases;
+  for (const post of posts) if (post.id !== introId && post.kind !== 'pdf' && typeof savedDrafts[post.id] === 'string') post.draft = savedDrafts[post.id];
   if (saved?.codeColors === false) document.body.classList.add('code-monochrome');
   document.body.classList.toggle('dark', saved?.theme !== 'light');
   for (const mode of ['dark', 'light']) {
@@ -95,8 +97,11 @@ function toast(message) {
 }
 function persist() {
   try {
-    posts.filter(post => post.loaded && !post.ephemeral && post.kind !== 'pdf').forEach(post => { savedDrafts[post.id] = post.draft; });
-    localStorage.setItem(storageKey, JSON.stringify({ drafts: savedDrafts, theme: document.body.classList.contains('dark') ? 'dark' : 'light', themeChoices, codeColors: !document.body.classList.contains('code-monochrome') }));
+    posts.filter(post => post.loaded && post.published !== null && !post.ephemeral && post.kind !== 'pdf').forEach(post => {
+      savedDrafts[post.id] = post.draft;
+      if (post.id === introId) savedDraftBases[introId] = introductionSource;
+    });
+    localStorage.setItem(storageKey, JSON.stringify({ drafts: savedDrafts, draftBases: savedDraftBases, theme: document.body.classList.contains('dark') ? 'dark' : 'light', themeChoices, codeColors: !document.body.classList.contains('code-monochrome') }));
     storageAvailable = true;
     return true;
   } catch { storageAvailable = false; toast('브라우저 저장 공간에 접근할 수 없습니다. 작성 내용을 따로 복사해주세요.'); return false; }
@@ -174,10 +179,13 @@ async function loadLibrary() {
     $('#retry-library').hidden = false;
   }
 }
+let introductionSource = null;
 async function initializeContent() {
   const introductionTask = requestText('/introduction.md').then(source => {
     const post = posts.find(post => post.id === introId);
-    post.published = source; post.draft = typeof savedDrafts[introId] === 'string' ? savedDrafts[introId] : source;
+    introductionSource = source;
+    post.published = source;
+    post.draft = savedDraftBases[introId] === source && typeof savedDrafts[introId] === 'string' ? savedDrafts[introId] : source;
     if (selected === introId) { renderArticle(); if (mode === 'edit') { $('#source').value = post.draft; renderPreview(); } }
   }).catch(() => toast('소개 파일을 읽지 못했습니다. 서버를 다시 실행해주세요.'));
   await Promise.allSettled([introductionTask, loadLibrary()]);
