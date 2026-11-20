@@ -22,8 +22,9 @@ function closingDollar(text, start, delimiter) {
 
 function safeUrl(value, image = false) {
   if (image && /^data:/i.test(value)) {
-    // Raster image data is inert inside <img>; never allow SVG/HTML data URLs.
-    const header = value.match(/^data:image\/(png|jpe?g|gif|webp);base64,/i);
+    // SVG stays in the browser's isolated image context, never inline HTML,
+    // an iframe, an object, or a navigable link. HTML data URLs stay blocked.
+    const header = value.match(/^data:image\/(png|jpe?g|gif|webp|svg\+xml);base64,/i);
     if (!header || value.length > 7 * 1024 * 1024) return null;
     const payload = value.slice(header[0].length);
     if (!payload || payload.length % 4 !== 0 || /[^A-Za-z0-9+/=]/.test(payload)) return null;

@@ -93,21 +93,32 @@ test('image labels and titles cannot introduce HTML attributes', () => {
 });
 
 test('unsafe image and link protocols do not produce active elements', () => {
-  for (const url of ['javascript:alert(1)', 'data:image/svg+xml;base64,AAAA', 'file:///secret.png', '//evil.example/image.png', 'https://owner:password@example.com/image.png']) {
+  for (const url of ['javascript:alert(1)', 'data:text/html;base64,AAAA', 'file:///secret.png', '//evil.example/image.png', 'https://owner:password@example.com/image.png']) {
     assert.ok(!inline(`![image](${url})`).includes('<img'), url);
     assert.ok(!inline(`[link](${url})`).includes('<a '), url);
   }
   assert.ok(inline('[문서](https://example.com/docs)').includes('<a href="https://example.com/docs"'));
 });
 
-test('Image Baker raster data URLs render as images but never as links or executable HTML', () => {
+test('Image Baker image data URLs render as images but never as links or executable HTML', () => {
   const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a9e0AAAAASUVORK5CYII=';
   assert.ok(render(`![embedded](${png})`).includes(`<img src="${png}"`));
   assert.ok(!inline(`[link](${png})`).includes('<a '));
   assert.ok(inline('`![](' + png + ')`').startsWith('<code>'));
   assert.ok(!render('```md\n![](' + png + ')\n```').includes('<img'));
   for (const mime of ['jpeg', 'jpg', 'gif', 'webp']) assert.ok(inline(`![](data:image/${mime};base64,AAAA)`).includes('<img'));
-  for (const url of ['data:image/svg+xml;base64,AAAA', 'data:text/html;base64,AAAA', 'data:image/png;base64,AA=A', 'data:image/png;base64,A!AA', 'data:image/png;base64,', 'data:image/png;base64,AAAA"onerror="x', 'data:image/png;base64,' + 'A'.repeat(4 * Math.ceil((5 * 1024 * 1024 + 1) / 3))]) assert.ok(!inline(`![](${url})`).includes('<img'));
+  for (const url of ['data:text/html;base64,AAAA', 'data:image/png;base64,AA=A', 'data:image/png;base64,A!AA', 'data:image/png;base64,', 'data:image/png;base64,AAAA"onerror="x', 'data:image/png;base64,' + 'A'.repeat(4 * Math.ceil((5 * 1024 * 1024 + 1) / 3))]) assert.ok(!inline(`![](${url})`).includes('<img'));
+});
+
+test('embedded SVG including XML declarations stays exclusively in an image src', () => {
+  const svg = '<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><rect width="20" height="20" fill="red"/><script>alert(1)</script></svg>';
+  const url = 'data:image/svg+xml;base64,' + Buffer.from(svg).toString('base64');
+  const html = render(`![Cavarly/6-1.svg](${url})`);
+  assert.ok(html.includes(`<img src="${url}"`));
+  assert.ok(!html.includes('<svg') && !html.includes('<script'));
+  assert.ok(!inline(`[SVG](${url})`).includes('<a '));
+  assert.ok(!inline(`\`![](${url})\``).includes('<img'));
+  for (const invalid of ['data:image/svg+xml,<svg/>', 'data:image/svg+xml;base64,AA=A', 'data:image/svg+xml;base64,AAAA"onload="alert(1)']) assert.ok(!inline(`![](${invalid})`).includes('<img'));
 });
 
 test('a Markdown table renders a header, body and column alignment', () => {
